@@ -12,7 +12,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CefSharp.Wpf" Version="83.4.20" />
+    <ProjectReference Include="..\Config\Config.csproj" />
+    <ProjectReference Include="..\Updater\Updater.csproj" />
   </ItemGroup>
 
 </Project>

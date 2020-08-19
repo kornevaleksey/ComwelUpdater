@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Updater;
 
 namespace CommonwealthUpdater
 {
@@ -23,6 +24,22 @@ namespace CommonwealthUpdater
         public MainWindow()
         {
             InitializeComponent();
+            //FileChecker check = new FileChecker("D:\\Master\\Lineage2\\updater_docker\\files\\client\\Lineage II HF Gudilap (Clear)");
+        }
+
+        private void ClientRun_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void Settings_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void Recheck_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

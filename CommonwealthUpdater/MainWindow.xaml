@@ -5,16 +5,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CommonwealthUpdater"
         mc:Ignorable="d"
-        Title="Updater" Height="600" Width="800" WindowStyle="None" MinWidth="800" MinHeight="600" MaxWidth="800" MaxHeight="600">
-    <Grid Height="596">
+        Title="Lineage II Commonwealth Client Updater" Height="84" Width="800" WindowStyle="ThreeDBorderWindow" MinWidth="800" MinHeight="102" MaxWidth="800" MaxHeight="100">
+    <Grid Margin="0,2,0,5">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="9*"/>
             <ColumnDefinition Width="7*"/>
             <ColumnDefinition Width="4*"/>
         </Grid.ColumnDefinitions>
-        <ProgressBar x:Name="updatepercentage" HorizontalAlignment="Left" Height="30" VerticalAlignment="Bottom" Width="630" Margin="5,0,0,15" Grid.ColumnSpan="2"/>
-        <Separator x:Name="separator" Margin="0,0,0,60" VerticalAlignment="Bottom" Grid.ColumnSpan="3"/>
-        <ComboBox x:Name="actionselector" Margin="0,0,10,15" VerticalAlignment="Bottom" Height="30" Grid.Column="2" HorizontalAlignment="Right" Width="130"/>
+        <ProgressBar x:Name="updatepercentage" HorizontalAlignment="Left" Height="30" VerticalAlignment="Center" Width="630" Margin="10,0,0,0" Grid.ColumnSpan="2"/>
+        <ComboBox x:Name="actionselector" VerticalAlignment="Center" Height="30" Grid.Column="2" HorizontalAlignment="Center" Width="130" SelectedIndex="0" IsSynchronizedWithCurrentItem="False">
+            <Button Content="Запуск" Click="ClientRun_Click"/>
+            <Button Content="Параметры" Click="Settings_Click"/>
+            <Button Content="Перепроверить файлы" Click="Recheck_Click"/>
+        </ComboBox>
 
     </Grid>
 </Window>
