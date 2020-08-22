@@ -1,12 +1,7 @@
-﻿<?xml version="1.0" encoding="iso-8859-5"?>
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Logger\Logger.csproj" />
-  </ItemGroup>
 
 </Project>

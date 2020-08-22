@@ -12,7 +12,11 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Config;
+using Launcher;
 using Updater;
+using Logger;
+
 
 namespace CommonwealthUpdater
 {
@@ -21,10 +25,18 @@ namespace CommonwealthUpdater
     /// </summary>
     public partial class MainWindow : Window
     {
+        L2UpdaterConfig UpdaterConfig;
+        FileChecker checker;
+        CommonLogger logger;
         public MainWindow()
         {
             InitializeComponent();
-            //FileChecker check = new FileChecker("D:\\Master\\Lineage2\\updater_docker\\files\\client\\Lineage II HF Gudilap (Clear)");
+
+            logger = new CommonLogger(AppDomain.CurrentDomain.BaseDirectory+"logs");
+
+            UpdaterConfig = new L2UpdaterConfig(logger);
+
+            checker = new FileChecker(logger, UpdaterConfig.ConfigParameters["ClientFolder"], AppDomain.CurrentDomain.BaseDirectory + "//hashes.txt");
         }
 
         private void ClientRun_Click(object sender, RoutedEventArgs e)
@@ -34,12 +46,13 @@ namespace CommonwealthUpdater
 
         private void Settings_Click(object sender, RoutedEventArgs e)
         {
-
+            new ConfigWindow(UpdaterConfig).ShowDialog();
         }
 
         private void Recheck_Click(object sender, RoutedEventArgs e)
         {
-
+            checker = new FileChecker(logger, UpdaterConfig.ConfigParameters["ClientFolder"], AppDomain.CurrentDomain.BaseDirectory + "//hashes.txt");
+            checker.ClientFilesCalculateHashes();
         }
     }
 }
