@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using Config;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using Serilog;
 
 namespace Launcher
 {
@@ -14,6 +16,8 @@ namespace Launcher
 
     public partial class ConfigWindow : Window
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         L2UpdaterConfig cfg;
 
         public ConfigWindow(L2UpdaterConfig cfg)

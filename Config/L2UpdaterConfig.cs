@@ -5,26 +5,23 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.IO;
-using Logger;
 
 namespace Config
 {
     public class L2UpdaterConfig
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         public string FileName { get; }
 
         public Dictionary<string, string> ConfigParameters { get; set; }
 
-        private CommonLogger logger;
-
-        public L2UpdaterConfig(CommonLogger logger)
+        public L2UpdaterConfig()
         {
-            this.logger = logger;
-
             ConfigParameters = new Dictionary<string, string>();
 
             FileName = AppDomain.CurrentDomain.BaseDirectory + "\\l2updater.json";
-            logger.Log("Select config file " + FileName);
+            logger.Info("Select config file " + FileName);
 
             if (File.Exists(FileName))
             {
@@ -32,7 +29,7 @@ namespace Config
 
             } else
             {
-                logger.Log("Config file doesn't exist, creating new");
+                logger.Info("Config file doesn't exist, creating new");
                 SetDefault();
                 Write();
             }
@@ -40,41 +37,41 @@ namespace Config
 
         public bool Read()
         {
-            logger.Log("Start loading config file");
+            logger.Info("Start loading config file");
             try
             {
                 string configString = File.ReadAllText(FileName);
                 ConfigParameters = JsonSerializer.Deserialize<Dictionary<string, string>>(configString);
                 foreach (var item in ConfigParameters)
                 {
-                    logger.Log("Reading key "+item.Key+" with value "+item.Value);
+                    logger.Info("Reading key "+item.Key+" with value "+item.Value);
                 }
             }
             catch (Exception ex)
             {
-                logger.Log("Error loading config file "+ex.Message);
+                logger.Info("Error loading config file "+ex.Message);
                 return false;
             }
 
-            logger.Log("Config file loaded");
+            logger.Info("Config file loaded");
             return true;
         }
 
         public bool Write()
         {
-            logger.Log("Start writing config file");
+            logger.Info("Start writing config file");
             try
             {
                 string configString = JsonSerializer.Serialize<Dictionary<string, string>>(ConfigParameters);
                 File.WriteAllText(FileName, configString);
-                logger.Log("Writing text in config file: " + configString);
+                logger.Info("Writing text in config file: " + configString);
             }
             catch (Exception ex)
             {
-                logger.Log("Error writing config file " + ex.Message);
+                logger.Info("Error writing config file " + ex.Message);
                 return false;
             }
-            logger.Log("Config file writed");
+            logger.Info("Config file writed");
             return true;
         }
         public void SetDefault()
