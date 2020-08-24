@@ -20,13 +20,20 @@ namespace Updater
 
         SHA256 sha256;
 
-        public event EventHandler ProgressUpdate;
-        public long ClientSize { get; private set; }
-        public long HashedSize { get; private set; }
-        public string HashingFileName { get; private set; }
+        public event EventHandler<FileCheckerProgressEventArgs> ProgressUpdate;
+
+        public class FileCheckerProgressEventArgs : EventArgs
+        {
+            public long ClientSize { get; set; }
+            public long HashedSize { get; set; }
+            public string HashingFileName { get; set; }
+        }
+
+        private long ClientSize;
 
         public FileChecker (string clientpath, string hashespath, bool rehash = false)
         {
+            logger.Info("Creating new FileChecker");
             this.clientpath = clientpath;
             this.hashespath = hashespath;
 
@@ -60,7 +67,12 @@ namespace Updater
 
             CalculateHashes(all_files);
 
-            //Task.Run<Dictionary<string, string>>(() => CalculateHashes(all_files));
+            ProgressUpdate?.Invoke(this, new FileCheckerProgressEventArgs()
+            {
+                ClientSize = 100,
+                HashedSize = 100,
+                HashingFileName = "Complete!"
+            });
 
             Dictionary<string, string> client_files_hashes = new Dictionary<string, string>();
 
@@ -69,18 +81,23 @@ namespace Updater
 
         public Dictionary<string, string> CalculateHashes(List<string> FilesNames)
         {
-            HashedSize = 0;
+            long HashedSize = 0;
             Dictionary<string, string> result = new Dictionary<string, string>();
             if (FilesNames.Count > 0)
             {
                 foreach (string filename in FilesNames)
                 {
                     HashedSize += new FileInfo(filename).Length;
-                    HashingFileName = filename;
 
                     byte[] hash = sha256.ComputeHash(File.OpenRead(filename));
 
-                    ProgressUpdate?.Invoke(this, new EventArgs());
+
+                    ProgressUpdate?.Invoke(this, new FileCheckerProgressEventArgs()
+                    {
+                        ClientSize = this.ClientSize,
+                        HashedSize = HashedSize,
+                        HashingFileName = filename
+                    });
 
                     result.Add (new Uri(hashespath + "\\").MakeRelativeUri(new Uri(filename)).ToString(),
                         Convert.ToBase64String(hash) );

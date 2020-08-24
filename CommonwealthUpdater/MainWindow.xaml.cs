@@ -47,8 +47,14 @@ namespace CommonwealthUpdater
             checker = new FileChecker(UpdaterConfig.ConfigParameters["ClientFolder"], AppDomain.CurrentDomain.BaseDirectory + "//hashes.txt");
         }
 
-        private void ActionProgress(object s, EventArgs args)
+        private void ActionProgress(object sender, FileChecker.FileCheckerProgressEventArgs args)
         {
+            Dispatcher.BeginInvoke((Action)delegate () 
+            { 
+                updatepercentage.Maximum = args.ClientSize; 
+                updatepercentage.Value = args.HashedSize; 
+                ActionShower.Content =args.HashingFileName; 
+            });
         }
 
         private void ClientRun_Click(object sender, RoutedEventArgs e)
@@ -64,10 +70,11 @@ namespace CommonwealthUpdater
         private async void Recheck_Click(object sender, RoutedEventArgs e)
         {
             checker = new FileChecker(UpdaterConfig.ConfigParameters["ClientFolder"], AppDomain.CurrentDomain.BaseDirectory + "//hashes.txt");
-            checker.ProgressUpdate += (s, args) =>
-            {
-                Dispatcher.BeginInvoke((Action)delegate () { updatepercentage.Maximum = checker.ClientSize; updatepercentage.Value = checker.HashedSize; ActionShower.Content = checker.HashingFileName; });
-            };
+            checker.ProgressUpdate += ActionProgress;
+            //checker.ProgressUpdate += (s, args) =>
+            //{
+            //Dispatcher.BeginInvoke((Action)delegate () { updatepercentage.Maximum = checker.ClientSize; updatepercentage.Value = checker.HashedSize; ActionShower.Content = checker.HashingFileName; });
+            //};
 
             await Task.Run(checker.ClientFilesCalculateHashes);
         }
