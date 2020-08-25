@@ -25,4 +25,10 @@
     <ProjectReference Include="..\Updater\Updater.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="nlog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

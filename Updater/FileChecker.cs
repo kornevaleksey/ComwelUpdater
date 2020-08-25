@@ -12,10 +12,12 @@ namespace Updater
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public Dictionary<string, bool> FilesCheck;
-        
-        protected string clientpath;
-        protected string hashespath;
+        public List<string> FilesRemoteDifferent;
+        public Dictionary<string, bool> FilesLocalExtra;
+
+        public string ClientPath { get; set; }
+        public string ClientHashesFile { get; set; }
+        public string RemoteHashesFile { get; set; }
         protected List<string[]> HashList;
 
         SHA256 sha256;
@@ -31,14 +33,23 @@ namespace Updater
 
         private long ClientSize;
 
-        public FileChecker (string clientpath, string hashespath, bool rehash = false)
+        public FileChecker()
         {
             logger.Info("Creating new FileChecker");
-            this.clientpath = clientpath;
-            this.hashespath = hashespath;
+            FilesRemoteDifferent = new List<string>();
+            HashList = new List<string[]>();
+            sha256 = SHA256.Create();
+        }
 
-            FilesCheck = new Dictionary<string, bool>();
+        public FileChecker (string clientpath, string hashespath, EventHandler<FileCheckerProgressEventArgs> ProgressUpdate, bool rehash, string clienthashes)
+        {
+            logger.Info("Creating new FileChecker");
+            this.ClientPath = clientpath;
+            this.RemoteHashesFile = hashespath;
+            this.ProgressUpdate = ProgressUpdate;
+            this.ClientHashesFile = clienthashes;
 
+            FilesRemoteDifferent = new List<string>();
             HashList = new List<string[]>();
             sha256 = SHA256.Create();
 
@@ -47,11 +58,32 @@ namespace Updater
             
         }
 
-        public void CheckClientFiles (string remote_HashesListFileName)
+        public async Task<bool> CheckClientHashes()
+        {
+            Dictionary<string, string> remote_hashes = await ReadHashesAsync(RemoteHashesFile);
+            Dictionary<string, string> client_hashes = await ReadHashesAsync(ClientHashesFile);
+
+            var difference = remote_hashes.Except(client_hashes);//client_hashes.Except(remote_hashes);
+
+            if (difference.ToList().Count > 0)
+            {
+                FilesRemoteDifferent.Clear();
+                foreach (KeyValuePair<string, string> pair in difference)
+                {
+                    FilesRemoteDifferent.Add(pair.Key);
+                }
+                return false;
+            }
+            else
+                return true;
+
+        }
+
+        public void CheckClientFiles ()
         {
             Dictionary<string, string> client_files_hashes = ClientFilesCalculateHashes();
 
-            Dictionary<string, string> remote_hashes = ReadHashes(remote_HashesListFileName);
+            Dictionary<string, string> remote_hashes = ReadHashes(RemoteHashesFile);
 
             var difference = client_files_hashes.Except(remote_hashes);
         }
@@ -59,13 +91,15 @@ namespace Updater
         public Dictionary<string, string> ClientFilesCalculateHashes()
         {
             //Get all files in client directory
-            List<string> all_files = Directory.GetFiles(clientpath, "*.*", SearchOption.AllDirectories).ToList();
+            List<string> all_files = Directory.GetFiles(ClientPath, "*.*", SearchOption.AllDirectories).ToList();
             //Calculate client size
             ClientSize = 0;
             foreach (string file in all_files)
                 ClientSize += new FileInfo(file).Length;
 
-            CalculateHashes(all_files);
+            Dictionary<string, string> client_files_hashes = CalculateHashes(all_files);
+
+            WriteHashes(client_files_hashes);
 
             ProgressUpdate?.Invoke(this, new FileCheckerProgressEventArgs()
             {
@@ -74,7 +108,7 @@ namespace Updater
                 HashingFileName = "Complete!"
             });
 
-            Dictionary<string, string> client_files_hashes = new Dictionary<string, string>();
+            
 
             return client_files_hashes;
         }
@@ -99,16 +133,28 @@ namespace Updater
                         HashingFileName = filename
                     });
 
-                    result.Add (new Uri(hashespath + "\\").MakeRelativeUri(new Uri(filename)).ToString(),
+                    result.Add (new Uri(ClientPath + "\\").MakeRelativeUri(new Uri(filename)).ToString(),
                         Convert.ToBase64String(hash) );
                 }
             }
             return result;
         }
 
+        public async void WriteHashesAsync (Dictionary<string, string> hashes)
+        {
+            using (TextWriter tw = new StreamWriter(ClientHashesFile))
+            {
+                foreach (var record in hashes)
+                {
+                    await tw.WriteLineAsync(record.Key + ":" + record.Value);
+                }
+                tw.Close();
+            }
+        }
+
         public void WriteHashes (Dictionary<string, string> hashes)
         {
-            using (TextWriter tw = new StreamWriter(hashespath + "\\Hashes.txt"))
+            using (TextWriter tw = new StreamWriter(ClientHashesFile))
             {
                 foreach (var record in hashes)
                 {
@@ -118,6 +164,31 @@ namespace Updater
             }
         }
 
+        public async Task<Dictionary<string, string>> ReadHashesAsync(string filename)
+        {
+            Dictionary<string, string> readhashes = new Dictionary<string, string>();
+
+            try
+            {
+                using (TextReader tr = new StreamReader(filename))
+                {
+                    string readline = await tr.ReadLineAsync();
+                    while (readline != null)
+                    {
+                        string[] pair = readline.Split(":", StringSplitOptions.RemoveEmptyEntries);
+                        readhashes.Add(pair[0], pair[1]);
+                        readline = await tr.ReadLineAsync();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Read hashes failed");
+            }
+
+            return readhashes;
+        }
+
         public Dictionary<string, string> ReadHashes(string filename)
         {
             Dictionary<string, string> readhashes = new Dictionary<string, string>();
@@ -125,11 +196,12 @@ namespace Updater
             using (TextReader tr = new StreamReader(filename))
             {
                 string readline = tr.ReadLine();
-                while (readline!=null)
+                while (readline != null)
                 {
                     string[] pair = readline.Split(":", StringSplitOptions.RemoveEmptyEntries);
                     readhashes.Add(pair[0], pair[1]);
-                }    
+                    readline = tr.ReadLine();
+                }
             }
 
             return readhashes;
