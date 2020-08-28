@@ -17,7 +17,7 @@ using System.Windows.Shapes;
 using Config;
 using Launcher;
 using Updater;
-
+using System.Diagnostics;
 
 namespace CommonwealthUpdater
 {
@@ -31,69 +31,61 @@ namespace CommonwealthUpdater
         L2UpdaterConfig UpdaterConfig;
         FileChecker checker;
         Loader loader;
-        
+        L2Client client;
+
+        private bool isMoving;
+        private double _startX;
+        private double _startY;
+
         public MainWindow()
         {
             UpdaterConfig = new L2UpdaterConfig();
 
             loader = new Loader(UpdaterConfig.ConfigParameters["DownloadAddress"], Convert.ToInt32(UpdaterConfig.ConfigParameters["DownloadPort"]));
 
-            checker = new FileChecker()
+            checker = new FileChecker();
+
+            client = new L2Client(loader)
             {
                 ClientPath = UpdaterConfig.ConfigParameters["ClientFolder"],
-                RemoteHashesFile = "",
+                RemoteHashesFile = "hashes//hashes.txt",
                 ClientHashesFile = AppDomain.CurrentDomain.BaseDirectory + "hashes.txt",
             };
-            checker.ProgressUpdate += ActionProgress;
+            client.ProgressUpdate += ActionProgress;
+
+            isMoving = false;
 
             InitializeComponent();
         }
 
         public async Task<bool> CheckClientOnStart()
         {
-            ActionIndicator.Content = "Пытаюсь установить связь с хранилищем клиента";
-
-            if (await loader.CheckConnect())
+            await client.CheckClient(true);
+            if ((client.LocalDifference!=null))
             {
-                ActionIndicator.Content = "Есть подключение к хранилищу клиента";
-                if (await loader.DownloadHashes())
+                if (client.LocalDifference.Count > 0)
                 {
-                    ActionIndicator.Content = "Получен файл хэшей";
-                    checker.RemoteHashesFile = loader.LocalHashesFile;
-                    if (await checker.CheckClientHashes()==false)
-                    {
-                        if (MessageBox.Show("Желаете обновиться?", "Обновление", MessageBoxButton.YesNo)==MessageBoxResult.Yes)
-                        {
-                            updatepercentage.Maximum = checker.FilesRemoteDifferent.Count;
-                            int percentage = 0;
-                            foreach (string file in checker.FilesRemoteDifferent)
-                            {
-                                updatepercentage.Value = percentage++;
-                                string remote_file = loader.ClientPath + "\\" + file;
-                                string local_file = checker.ClientPath + "\\" + file;
-                                ActionIndicator.Content = "Скачиваю файл: " + file;
-                                await loader.DownloadFile(remote_file, local_file);
-                                //TODO: add speed meter NetworkInterface GetIPv4ReceivedBytes
-                            }
-                        }
-                    }
+                    PlayL2.IsEnabled = false;
+                    UpdateL2.IsEnabled = true;
                 }
-            }
-            else
-            {
-                ActionIndicator.Content = "Отсутствует связь с хранилищем клиента. Проверьте подключение к интерненту.";
-            }
-
+                else
+                {
+                    PlayL2.IsEnabled = false;
+                    UpdateL2.IsEnabled = true;
+                }
+                return true;
+            } else
             return false;
         }
 
-        private void ActionProgress(object sender, FileChecker.FileCheckerProgressEventArgs args)
+        private void ActionProgress(object sender, UpdaterProgressEventArgs args)
         {
             Dispatcher.BeginInvoke((Action)delegate () 
             { 
-                updatepercentage.Maximum = args.ClientSize; 
-                updatepercentage.Value = args.HashedSize; 
-                ActionIndicator.Content =args.HashingFileName; 
+                updatepercentage.Maximum = args.ProgressMax; 
+                updatepercentage.Value = args.ProgressValue; 
+                InfoBlock.Text = args.InfoStr;
+                InfoBlock.Foreground = new SolidColorBrush(Color.FromArgb(args.InfoStrColor.A, args.InfoStrColor.R, args.InfoStrColor.G, args.InfoStrColor.B));
             });
         }
 
@@ -104,21 +96,89 @@ namespace CommonwealthUpdater
 
         private void Settings_Click(object sender, RoutedEventArgs e)
         {
-            new ConfigWindow(UpdaterConfig).ShowDialog();
+            
         }
 
         private void Recheck_Click(object sender, RoutedEventArgs e)
         {
-            //checker = new FileChecker(UpdaterConfig.ConfigParameters["ClientFolder"], AppDomain.CurrentDomain.BaseDirectory + "//hashes.txt", ActionProgress, true, );
-            //checker.ProgressUpdate += ActionProgress;
-            checker.ClientPath = UpdaterConfig.ConfigParameters["ClientFolder"];
-
-            Task.Run(checker.ClientFilesCalculateHashes);
         }
 
         private async void updaterwindow_Initialized(object sender, EventArgs e)
         {
             bool res = await CheckClientOnStart();
+        }
+
+        private async void actionselector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ComboBox comboBox = (ComboBox)sender;
+            var selectedItem = comboBox.SelectedItem;
+            if (selectedItem.GetType() == typeof(ComboBoxItem))
+            switch (((ComboBoxItem)selectedItem).Content)
+            {
+                case "Играть":
+                        Process proc = new Process();
+                        proc.StartInfo.FileName = client.ClientPath + "//system/l2.exe";
+                        proc.StartInfo.UseShellExecute = true;
+                        proc.StartInfo.Verb = "runas";
+                        proc.Start();
+                    break;
+                case "Обновление":
+                        updatepercentage.Maximum = client.LocalDifference.Count;
+                        int percentage = 0;
+                        foreach (string file in client.LocalDifference)
+                        {
+                            updatepercentage.Value = percentage++;
+                            string remote_file = loader.ClientPath + "\\" + file;
+                            string local_file = client.ClientPath + "\\" + file;
+                            InfoBlock.Text = "Скачиваю файл: " + file;
+                            await loader.DownloadFile(remote_file, local_file);
+                            //TODO: add speed meter NetworkInterface GetIPv4ReceivedBytes
+                        }
+                        await client.CheckClient(true);
+                        if (client.LocalDifference.Count==0)
+                            ((ComboBoxItem)selectedItem).Content = "Играть";
+                        break;
+                case "Параметры":
+                        new ConfigWindow(UpdaterConfig).ShowDialog();
+                    break;
+                case "Перепроверить файлы":
+                        client.ClientPath = UpdaterConfig.ConfigParameters["ClientFolder"];
+                        await client.CheckClient(false);
+                        //Task.Run(checker.ClientFilesCalculateHashes);
+                    break;
+                case "О программе":
+                    break;
+            }
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+
+        private void MainGrid_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            _startX = Mouse.GetPosition(this).X;
+            _startY = Mouse.GetPosition(this).Y;
+            //isMoving = true;
+        }
+
+        private void MainGrid_PreviewMouseMove(object sender, MouseEventArgs e)
+        {
+            if (!isMoving) return;
+
+            this.Top = Mouse.GetPosition(this).Y - _startY;
+            this.Left = Mouse.GetPosition(this).X - _startX;
+        }
+
+        private void MainGrid_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            isMoving = false;
         }
     }
 }

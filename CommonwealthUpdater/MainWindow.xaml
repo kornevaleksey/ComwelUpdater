@@ -1,19 +1,140 @@
-﻿<Window x:Name="updaterwindow" x:Class="CommonwealthUpdater.MainWindow"
+﻿<Window
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CommonwealthUpdater"
+        x:Name="updaterwindow" x:Class="CommonwealthUpdater.MainWindow"
         mc:Ignorable="d"
-        Title="Lineage II Commonwealth Client Updater" Width="800" WindowStyle="ThreeDBorderWindow" MinWidth="800" MinHeight="140" MaxWidth="800" MaxHeight="140" Initialized="updaterwindow_Initialized">
+        Title="Lineage II Commonwealth Client Updater" Width="400" Height="350" WindowStyle="None" Initialized="updaterwindow_Initialized" ResizeMode="NoResize" ShowActivated="False">
+    <Window.Resources>
+        <Style x:Key="ImageButton" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="border" BorderThickness="0" BorderBrush="Black" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Opacity" Value="0.8" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
     <Grid x:Name="grid">
-        <ProgressBar x:Name="updatepercentage" HorizontalAlignment="Left" Height="30" VerticalAlignment="Top" Width="630" Margin="10,17,0,0"/>
-        <ComboBox x:Name="actionselector" VerticalAlignment="Top" Height="30" HorizontalAlignment="Left" Width="130" SelectedIndex="0" IsSynchronizedWithCurrentItem="False" Margin="645,17,0,0">
-            <Button Content="Запуск" Click="ClientRun_Click"/>
-            <Button Content="Параметры" Click="Settings_Click"/>
-            <Button Content="Перепроверить файлы" Click="Recheck_Click"/>
-        </ComboBox>
-        <Label x:Name="ActionIndicator" Content="" HorizontalAlignment="Left" Margin="12,59,0,0" VerticalAlignment="Top" Width="628"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="10*"/>
+            <ColumnDefinition Width="2*"/>
+        </Grid.ColumnDefinitions>
+        <Grid x:Name="MainGrid" Grid.Column="0" Background="Ivory" PreviewMouseDown="MainGrid_PreviewMouseDown" PreviewMouseMove="MainGrid_PreviewMouseMove" PreviewMouseUp="MainGrid_PreviewMouseUp">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="3*"/>
+                <RowDefinition Height="3*"/>
+                <RowDefinition Height="3*"/>
+                <RowDefinition Height="3.5*"/>
+                <RowDefinition Height="3.5*"/>
+                <RowDefinition Height="3.5*"/>
+            </Grid.RowDefinitions>
+            <ProgressBar x:Name="updatepercentage" Grid.Row="5" Grid.ColumnSpan="7" Margin="10,20,10,20" Background="DarkGray" Foreground="#FFF1F15E"/>
+            <TextBlock x:Name="InfoBlock" Grid.Row="4" Grid.ColumnSpan="7" Margin="15"/>
+            <Button x:Name="PlayL2" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="3" Background="LightGreen" IsEnabled="False">
+                <Button.Resources>
+                    <Style TargetType="{x:Type Border}">
+                        <Setter Property="CornerRadius" Value="20"/>
+                    </Style>
+                </Button.Resources>
+                <TextBlock FontSize="20"><Run Text="Играть"/></TextBlock>
+            </Button>
+            <Button x:Name="UpdateL2" Grid.Column="4" Grid.ColumnSpan="2" Grid.Row="3" Background="LightBlue" IsEnabled="False">
+                <Button.Resources>
+                    <Style TargetType="{x:Type Border}">
+                        <Setter Property="CornerRadius" Value="20"/>
+                    </Style>
+                </Button.Resources>
+                <TextBlock FontSize="20"><Run Text="Обновить"/></TextBlock>
+            </Button>
+        </Grid>
+        <DockPanel Grid.Column="1" Background="#FFF1F15E" VerticalAlignment="Stretch" LastChildFill="False">
+            <DockPanel DockPanel.Dock="Top" Height="30">
+                <Button Width="20" DockPanel.Dock="Left" Margin="5" BorderThickness="0" Click="Button_Click_1">
+                    <Button.Background>
+                        <ImageBrush ImageSource="D:\Master\Lineage2\ComwelUpdater\CommonwealthUpdater\images\minimize.gif"/>
+                    </Button.Background>
+                </Button>
+                <Button Width="20" DockPanel.Dock="Left" Margin="5" BorderThickness="0" Click="Button_Click">
+                    <Button.Background>
+                        <ImageBrush ImageSource="D:\Master\Lineage2\ComwelUpdater\CommonwealthUpdater\images\close.gif"/>
+                    </Button.Background>
+                </Button>
+            </DockPanel>
+            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5,5,5,15" BorderBrush="Transparent"  Style="{StaticResource ImageButton}">
+                <Button.Resources>
+                    <Style TargetType="{x:Type Border}">
+                        <Setter Property="CornerRadius" Value="10"/>
+                    </Style>
+                </Button.Resources>
+                <Button.Background>
+                    <ImageBrush ImageSource="D:\Master\Lineage2\ComwelUpdater\CommonwealthUpdater\images\l2.png"/>
+                </Button.Background>
+            </Button>
+            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}">
+                <Button.Resources>
+                    <Style TargetType="{x:Type Border}">
+                        <Setter Property="CornerRadius" Value="10"/>
+                    </Style>
+                </Button.Resources>
+                <Button.Background>
+                    <ImageBrush ImageSource="D:\Master\Lineage2\ComwelUpdater\CommonwealthUpdater\images\settings.png" Stretch="Fill"/>
+                </Button.Background>
+            </Button>
+            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}">
+                <Button.Resources>
+                    <Style TargetType="{x:Type Border}">
+                        <Setter Property="CornerRadius" Value="10"/>
+                    </Style>
+                </Button.Resources>
+                <Button.Background>
+                    <ImageBrush ImageSource="D:\Master\Lineage2\ComwelUpdater\CommonwealthUpdater\images\recheck.png"/>
+                </Button.Background>
+            </Button>
+            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}">
+                <Button.Resources>
+                    <Style TargetType="{x:Type Border}">
+                        <Setter Property="CornerRadius" Value="10"/>
+                    </Style>
+                </Button.Resources>
+                <Button.Background>
+                    <ImageBrush ImageSource="D:\Master\Lineage2\ComwelUpdater\CommonwealthUpdater\images\info.png" Stretch="Fill"/>
+                </Button.Background>
+            </Button>
+            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}">
+                <Button.Resources>
+                    <Style TargetType="{x:Type Border}">
+                        <Setter Property="CornerRadius" Value="10"/>
+                    </Style>
+                </Button.Resources>
+                <Button.Background>
+                    <ImageBrush ImageSource="D:\Master\Heraldic\Gudilap\gudilap_square.png"/>
+                </Button.Background>
+            </Button>
+        </DockPanel>
 
     </Grid>
+
 </Window>
+

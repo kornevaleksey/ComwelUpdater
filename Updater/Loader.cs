@@ -104,7 +104,7 @@ namespace Updater
                     {
                         await response.Content.CopyToAsync(downloadfilestream);
                     }
-                    logger.Info(String.Format("Success download to client remote storage on {0}", RemoteAddr));
+                    logger.Info(String.Format("Success download to client remote storage on {0}", uriBuilder.ToString()));
                     if (temporaryOldFile!="")
                         File.Delete(temporaryOldFile);
                 }
