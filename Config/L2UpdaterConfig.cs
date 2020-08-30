@@ -76,7 +76,7 @@ namespace Config
         }
         public void SetDefault()
         {
-            ConfigParameters.Add("DownloadAddress", "http:\\\\localhost");
+            ConfigParameters.Add("DownloadAddress", "localhost");
             ConfigParameters.Add("DownloadPort", "9000");
             ConfigParameters.Add("DownloadMaxSpeed", "1000");
             ConfigParameters.Add("ClientFolder", "c:\\Lineage2");

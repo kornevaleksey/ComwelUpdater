@@ -1,0 +1,55 @@
+﻿<Page x:Name="SettingsL2" x:Class="Launcher.SettingsLauncher"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:Launcher"
+      mc:Ignorable="d" 
+      d:DesignHeight="350" d:DesignWidth="333.333"
+      Title="Settings">
+    <Grid>
+        <Grid x:Name="FullCheckGrid" Background="Ivory">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="BtnFullCheck" Grid.Column="4" Grid.ColumnSpan="4" Grid.Row="1" Grid.RowSpan="2" Background="DarkOrange" Margin="5">
+                <Button.Resources>
+                    <Style TargetType="{x:Type Border}">
+                        <Setter Property="CornerRadius" Value="10"/>
+                    </Style>
+                </Button.Resources>
+                <TextBlock FontSize="14" TextWrapping="Wrap" TextAlignment="Center"><Run Text="Полная проверка"/></TextBlock>
+            </Button>
+            <ProgressBar x:Name="FullCheckPercentage" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="10" Background="DarkGray" Foreground="#FFF1F15E"/>
+            <TextBox x:Name="FullCheckLog" Grid.Column="0" Grid.ColumnSpan="12" Grid.Row="6" Grid.RowSpan="5" IsReadOnly="True">
+            </TextBox>
+        </Grid>
+    </Grid>
+
+
+</Page>

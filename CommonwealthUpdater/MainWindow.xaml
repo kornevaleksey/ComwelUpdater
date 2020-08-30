@@ -6,7 +6,10 @@
         xmlns:local="clr-namespace:CommonwealthUpdater"
         x:Name="updaterwindow" x:Class="CommonwealthUpdater.MainWindow"
         mc:Ignorable="d"
-        Title="Lineage II Commonwealth Client Updater" Width="400" Height="350" WindowStyle="None" Initialized="updaterwindow_Initialized" ResizeMode="NoResize" ShowActivated="False">
+        Title="Lineage II Commonwealth Client Updater" 
+        Width="400" Height="350" WindowStyle="None" 
+        Initialized="updaterwindow_Initialized" ResizeMode="NoResize"
+        ShowActivated="False">
     <Window.Resources>
         <Style x:Key="ImageButton" TargetType="Button">
             <Setter Property="OverridesDefaultStyle" Value="True" />
@@ -19,7 +22,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Opacity" Value="0.8" />
+                                <Setter Property="Opacity" Value="0.75" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -32,108 +35,216 @@
             <ColumnDefinition Width="10*"/>
             <ColumnDefinition Width="2*"/>
         </Grid.ColumnDefinitions>
-        <Grid x:Name="MainGrid" Grid.Column="0" Background="Ivory" PreviewMouseDown="MainGrid_PreviewMouseDown" PreviewMouseMove="MainGrid_PreviewMouseMove" PreviewMouseUp="MainGrid_PreviewMouseUp">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="1*"/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="3*"/>
-                <RowDefinition Height="3*"/>
-                <RowDefinition Height="3*"/>
-                <RowDefinition Height="3.5*"/>
-                <RowDefinition Height="3.5*"/>
-                <RowDefinition Height="3.5*"/>
-            </Grid.RowDefinitions>
-            <ProgressBar x:Name="updatepercentage" Grid.Row="5" Grid.ColumnSpan="7" Margin="10,20,10,20" Background="DarkGray" Foreground="#FFF1F15E"/>
-            <TextBlock x:Name="InfoBlock" Grid.Row="4" Grid.ColumnSpan="7" Margin="15"/>
-            <Button x:Name="PlayL2" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="3" Background="LightGreen" IsEnabled="False">
-                <Button.Resources>
-                    <Style TargetType="{x:Type Border}">
-                        <Setter Property="CornerRadius" Value="20"/>
-                    </Style>
-                </Button.Resources>
-                <TextBlock FontSize="20"><Run Text="Играть"/></TextBlock>
-            </Button>
-            <Button x:Name="UpdateL2" Grid.Column="4" Grid.ColumnSpan="2" Grid.Row="3" Background="LightBlue" IsEnabled="False">
-                <Button.Resources>
-                    <Style TargetType="{x:Type Border}">
-                        <Setter Property="CornerRadius" Value="20"/>
-                    </Style>
-                </Button.Resources>
-                <TextBlock FontSize="20"><Run Text="Обновить"/></TextBlock>
-            </Button>
-        </Grid>
+        <TabControl x:Name="MainSelector" Grid.Column="0" TabStripPlacement="Right">
+            <TabItem x:Name="UpdaterTab" IsSelected="True" Visibility="Collapsed">
+                <Grid x:Name="UpdaterGrid" Background="Ivory" MouseDown="MainGrid_MouseDown">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="3*"/>
+                        <RowDefinition Height="3*"/>
+                        <RowDefinition Height="3*"/>
+                        <RowDefinition Height="3.5*"/>
+                        <RowDefinition Height="3.5*"/>
+                        <RowDefinition Height="3.5*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Column="2" Grid.ColumnSpan="3"  Grid.Row="3">
+                        <Ellipse x:Name="ServerStatusIndicator" Width="30" Height="30" Fill="DarkGray"/>
+                        <Label FontSize="16" HorizontalAlignment="Center">Статус сервера</Label>
+                    </StackPanel>
+                    <ProgressBar x:Name="updatepercentage" Grid.Row="4" Grid.ColumnSpan="7" Margin="10,20,10,20" Background="DarkGray" Foreground="#FFF1F15E"/>
+                    <TextBlock x:Name="InfoBlock" Grid.Row="5" Grid.ColumnSpan="7" Margin="15"/>
+                    <Button x:Name="PlayL2" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="2" Background="LightGreen" IsEnabled="False">
+                        <Button.Resources>
+                            <Style TargetType="{x:Type Border}">
+                                <Setter Property="CornerRadius" Value="20"/>
+                            </Style>
+                        </Button.Resources>
+                        <TextBlock FontSize="20"><Run Text="Играть"/></TextBlock>
+                    </Button>
+                    <Button x:Name="UpdateL2" Grid.Column="4" Grid.ColumnSpan="2" Grid.Row="2" Background="LightBlue" IsEnabled="False">
+                        <Button.Resources>
+                            <Style TargetType="{x:Type Border}">
+                                <Setter Property="CornerRadius" Value="20"/>
+                            </Style>
+                        </Button.Resources>
+                        <TextBlock FontSize="20"><Run Text="Обновить"/></TextBlock>
+                    </Button>
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="SettingsTab" IsSelected="False" Visibility="Collapsed">
+                <TabItem.Content>
+                    <Grid x:Name="SettingsGrid" Background="Ivory" MouseDown="MainGrid_MouseDown">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                        </Grid.RowDefinitions>
+                        <DockPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="7" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                            <Label Margin="5" FontSize="14">
+                                Адрес сайта:
+                            </Label>
+                            <TextBox x:Name="RemoteAddr" Tag="DownloadAddress" Margin="5" Background="#FFF1F15E" VerticalContentAlignment="Center" FontSize="14" TextChanged="SettingField_Changed">
+                            </TextBox>
+                        </DockPanel>
+                        <DockPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="7" HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <Label Margin="5" FontSize="14" DockPanel.Dock="Left">
+                                Порт:
+                            </Label>
+                            <TextBox x:Name="RemotePort" Margin="5" Tag="DownloadPort" Background="#FFF1F15E" Width="100" DockPanel.Dock="Left" VerticalContentAlignment="Center" FontSize="14">
+                            </TextBox>
+                        </DockPanel>
+                        <Label Grid.Column="0" Grid.ColumnSpan="6" Grid.Row="4" FontSize="16">
+                            Расположение клиента Lineage II
+                        </Label>
+                        <DockPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <Button x:Name="BtnSelect" Background="LightBlue" Margin="5" Click="BtnSelect_Click">
+                                <Button.Resources>
+                                    <Style TargetType="{x:Type Border}">
+                                        <Setter Property="CornerRadius" Value="10"/>
+                                    </Style>
+                                </Button.Resources>
+                                <TextBlock FontSize="14"><Run Text="Выбрать"/></TextBlock>
+                            </Button>
+                            <TextBox x:Name="ClientDestination" Tag="ClientFolder" Margin="5" Background="#FFF1F15E" IsReadOnly="True" VerticalContentAlignment="Center" FontSize="14">
+                            </TextBox>
+                        </DockPanel>
+                    </Grid>
+                </TabItem.Content>
+            </TabItem>
+            <TabItem x:Name="FullCheckTab" IsSelected="False" Visibility="Collapsed">
+                <TabItem.Content>
+                    <Grid x:Name="FullCheckGrid" Background="Ivory" MouseDown="MainGrid_MouseDown">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="1*"/>
+                        </Grid.RowDefinitions>
+                        <Button x:Name="BtnFullCheck" Grid.Column="4" Grid.ColumnSpan="4" Grid.Row="1" Grid.RowSpan="2" Background="DarkOrange" Margin="5">
+                            <Button.Resources>
+                                <Style TargetType="{x:Type Border}">
+                                    <Setter Property="CornerRadius" Value="10"/>
+                                </Style>
+                            </Button.Resources>
+                            <TextBlock FontSize="14" TextWrapping="Wrap" TextAlignment="Center"><Run Text="Полная проверка"/></TextBlock>
+                        </Button>
+                        <ProgressBar x:Name="FullCheckPercentage" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="10" Background="DarkGray" Foreground="#FFF1F15E"/>
+                        <TextBox x:Name="FullCheckLog" Grid.Column="0" Grid.ColumnSpan="12" Grid.Row="6" Grid.RowSpan="5" IsReadOnly="True">
+                        </TextBox>
+                    </Grid>
+                </TabItem.Content>
+            </TabItem>
+                     
+        </TabControl>
+
         <DockPanel Grid.Column="1" Background="#FFF1F15E" VerticalAlignment="Stretch" LastChildFill="False">
             <DockPanel DockPanel.Dock="Top" Height="30">
                 <Button Width="20" DockPanel.Dock="Left" Margin="5" BorderThickness="0" Click="Button_Click_1">
                     <Button.Background>
-                        <ImageBrush ImageSource="D:\Master\Lineage2\ComwelUpdater\CommonwealthUpdater\images\minimize.gif"/>
+                        <ImageBrush ImageSource="images/minimize.gif"/>
                     </Button.Background>
                 </Button>
                 <Button Width="20" DockPanel.Dock="Left" Margin="5" BorderThickness="0" Click="Button_Click">
                     <Button.Background>
-                        <ImageBrush ImageSource="D:\Master\Lineage2\ComwelUpdater\CommonwealthUpdater\images\close.gif"/>
+                        <ImageBrush ImageSource="images/close.gif"/>
                     </Button.Background>
                 </Button>
             </DockPanel>
-            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5,5,5,15" BorderBrush="Transparent"  Style="{StaticResource ImageButton}">
+            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5,5,5,15" BorderBrush="Transparent"  Style="{StaticResource ImageButton}" AutomationProperties.HelpText="Играть на сервере Commonwealth" Click="UpdaterClick" ToolTip="Обновление клиента">
                 <Button.Resources>
                     <Style TargetType="{x:Type Border}">
                         <Setter Property="CornerRadius" Value="10"/>
                     </Style>
                 </Button.Resources>
                 <Button.Background>
-                    <ImageBrush ImageSource="D:\Master\Lineage2\ComwelUpdater\CommonwealthUpdater\images\l2.png"/>
+                    <ImageBrush ImageSource="images/l2.png"/>
                 </Button.Background>
             </Button>
-            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}">
+            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}" AutomationProperties.HelpText="Настроить лаунчер" Click="Settings_Click" ToolTip="Настройки">
                 <Button.Resources>
                     <Style TargetType="{x:Type Border}">
                         <Setter Property="CornerRadius" Value="10"/>
                     </Style>
                 </Button.Resources>
                 <Button.Background>
-                    <ImageBrush ImageSource="D:\Master\Lineage2\ComwelUpdater\CommonwealthUpdater\images\settings.png" Stretch="Fill"/>
+                    <ImageBrush ImageSource="images/settings.png" Stretch="Fill"/>
                 </Button.Background>
             </Button>
-            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}">
+            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}" AutomationProperties.HelpText="Проверить полностью" ToolTip="Полная проверка">
                 <Button.Resources>
                     <Style TargetType="{x:Type Border}">
                         <Setter Property="CornerRadius" Value="10"/>
                     </Style>
                 </Button.Resources>
                 <Button.Background>
-                    <ImageBrush ImageSource="D:\Master\Lineage2\ComwelUpdater\CommonwealthUpdater\images\recheck.png"/>
+                    <ImageBrush ImageSource="images/recheck.png"/>
                 </Button.Background>
             </Button>
-            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}">
+            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}" AutomationProperties.HelpText="Узнать о программе" ToolTip="Помощь">
                 <Button.Resources>
                     <Style TargetType="{x:Type Border}">
                         <Setter Property="CornerRadius" Value="10"/>
                     </Style>
                 </Button.Resources>
                 <Button.Background>
-                    <ImageBrush ImageSource="D:\Master\Lineage2\ComwelUpdater\CommonwealthUpdater\images\info.png" Stretch="Fill"/>
+                    <ImageBrush ImageSource="images/info.png" Stretch="Fill"/>
                 </Button.Background>
             </Button>
-            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}">
+            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}" AutomationProperties.HelpText="Информатироваться" ToolTip="Интернет-ресурсы">
                 <Button.Resources>
                     <Style TargetType="{x:Type Border}">
                         <Setter Property="CornerRadius" Value="10"/>
                     </Style>
                 </Button.Resources>
                 <Button.Background>
-                    <ImageBrush ImageSource="D:\Master\Heraldic\Gudilap\gudilap_square.png"/>
+                    <ImageBrush ImageSource="images/recheck.png"/>
                 </Button.Background>
             </Button>
         </DockPanel>
-
     </Grid>
 
 </Window>

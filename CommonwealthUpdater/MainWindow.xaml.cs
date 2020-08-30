@@ -14,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using Config;
 using Launcher;
 using Updater;
@@ -33,10 +34,6 @@ namespace CommonwealthUpdater
         Loader loader;
         L2Client client;
 
-        private bool isMoving;
-        private double _startX;
-        private double _startY;
-
         public MainWindow()
         {
             UpdaterConfig = new L2UpdaterConfig();
@@ -52,8 +49,6 @@ namespace CommonwealthUpdater
                 ClientHashesFile = AppDomain.CurrentDomain.BaseDirectory + "hashes.txt",
             };
             client.ProgressUpdate += ActionProgress;
-
-            isMoving = false;
 
             InitializeComponent();
         }
@@ -94,9 +89,18 @@ namespace CommonwealthUpdater
 
         }
 
+        private void UpdaterClick(object sender, RoutedEventArgs e)
+        {
+            MainSelector.SelectedIndex = 0;
+        }
+
         private void Settings_Click(object sender, RoutedEventArgs e)
         {
-            
+            RemoteAddr.Text = UpdaterConfig.ConfigParameters[(string)RemoteAddr.Tag];
+            RemotePort.Text = UpdaterConfig.ConfigParameters[(string)RemotePort.Tag];
+            ClientDestination.Text = UpdaterConfig.ConfigParameters[(string)ClientDestination.Tag];
+
+            MainSelector.SelectedIndex = 1;
         }
 
         private void Recheck_Click(object sender, RoutedEventArgs e)
@@ -139,7 +143,7 @@ namespace CommonwealthUpdater
                             ((ComboBoxItem)selectedItem).Content = "Играть";
                         break;
                 case "Параметры":
-                        new ConfigWindow(UpdaterConfig).ShowDialog();
+                        //new ConfigWindow(UpdaterConfig).ShowDialog();
                     break;
                 case "Перепроверить файлы":
                         client.ClientPath = UpdaterConfig.ConfigParameters["ClientFolder"];
@@ -161,24 +165,36 @@ namespace CommonwealthUpdater
             this.WindowState = WindowState.Minimized;
         }
 
-        private void MainGrid_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        private void MainGrid_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            _startX = Mouse.GetPosition(this).X;
-            _startY = Mouse.GetPosition(this).Y;
-            //isMoving = true;
+            if (Mouse.LeftButton == MouseButtonState.Pressed)
+                this.DragMove();
         }
 
-        private void MainGrid_PreviewMouseMove(object sender, MouseEventArgs e)
-        {
-            if (!isMoving) return;
 
-            this.Top = Mouse.GetPosition(this).Y - _startY;
-            this.Left = Mouse.GetPosition(this).X - _startX;
+
+        #region Settings tab events 
+        private void BtnSelect_Click(object sender, RoutedEventArgs e)
+        {
+            CommonOpenFileDialog commonOpenFileDialog = new CommonOpenFileDialog()
+            {
+                IsFolderPicker = true,
+                InitialDirectory = UpdaterConfig.ConfigParameters[(string)ClientDestination.Tag]
+            };
+
+            if (commonOpenFileDialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                UpdaterConfig.ConfigParameters[(string)ClientDestination.Tag] = commonOpenFileDialog.FileName;
+                ClientDestination.Text = commonOpenFileDialog.FileName;
+            }
         }
 
-        private void MainGrid_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+        private void SettingField_Changed(object sender, TextChangedEventArgs e)
         {
-            isMoving = false;
+            UpdaterConfig.ConfigParameters[(string)((TextBox)sender).Tag] = ((TextBox)sender).Text;
+
+            UpdaterConfig.Write();
         }
+        #endregion
     }
 }
