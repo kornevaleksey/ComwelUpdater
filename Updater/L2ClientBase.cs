@@ -4,18 +4,21 @@ using System.Text;
 using System.IO;
 using System.Threading.Tasks;
 using System.Text.Json;
+using System.Drawing;
 
 namespace Updater
 {
-    class L2ClientBase
+    public abstract class L2ClientBase
     {
         protected static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public Uri Folder { get; set; }
         public Uri HashesFile { get; set; }
 
+        public event EventHandler<UpdaterProgressEventArgs> ProgressUpdate;
+
         protected string ShadowHashesFile;
-        protected List<ClientFileInfo> FilesInfo;
+        public List<ClientFileInfo> FilesInfo { get; protected set; }
 
         public L2ClientBase(Uri Folder, Uri HashesFile)
         {
@@ -23,9 +26,8 @@ namespace Updater
             this.HashesFile = HashesFile;
         }
 
-        public virtual void PrepareInfo()
-        {
-        }
+        public abstract Task<bool> PrepareInfo();
+
 
         protected async Task<bool> WriteFilesInfo(List<ClientFileInfo> clientFileInfos, string filename)
         {
@@ -47,5 +49,21 @@ namespace Updater
                 return null;
             }
         }
+    }
+
+    public class ClientFileInfo
+    {
+        public string FileName { get; set; }
+        public byte[] Hash { get; set; }
+        public long FileSize { get; set; }
+        public bool AllowLocalChange { get; set; }
+    }
+
+    public class UpdaterProgressEventArgs : EventArgs
+    {
+        public long ProgressMax { get; set; }
+        public long ProgressValue { get; set; }
+        public string InfoStr { get; set; }
+        public Color InfoStrColor { get; set; }
     }
 }

@@ -12,9 +12,8 @@ namespace Updater
 {
     public class FileChecker
     {
-        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-
-        SHA256 sha256;
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        readonly SHA256 sha256;
 
         public FileChecker()
         {

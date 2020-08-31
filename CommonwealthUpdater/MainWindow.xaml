@@ -61,7 +61,7 @@
                     </StackPanel>
                     <ProgressBar x:Name="updatepercentage" Grid.Row="4" Grid.ColumnSpan="7" Margin="10,20,10,20" Background="DarkGray" Foreground="#FFF1F15E"/>
                     <TextBlock x:Name="InfoBlock" Grid.Row="5" Grid.ColumnSpan="7" Margin="15"/>
-                    <Button x:Name="PlayL2" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="2" Background="LightGreen" IsEnabled="False">
+                    <Button x:Name="PlayL2" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="2" Background="LightGreen" IsEnabled="False" Click="PlayL2_Click">
                         <Button.Resources>
                             <Style TargetType="{x:Type Border}">
                                 <Setter Property="CornerRadius" Value="20"/>
@@ -69,7 +69,7 @@
                         </Button.Resources>
                         <TextBlock FontSize="20"><Run Text="Играть"/></TextBlock>
                     </Button>
-                    <Button x:Name="UpdateL2" Grid.Column="4" Grid.ColumnSpan="2" Grid.Row="2" Background="LightBlue" IsEnabled="False">
+                    <Button x:Name="UpdateL2" Grid.Column="4" Grid.ColumnSpan="2" Grid.Row="2" Background="LightBlue" IsEnabled="False" Click="UpdateL2_Click">
                         <Button.Resources>
                             <Style TargetType="{x:Type Border}">
                                 <Setter Property="CornerRadius" Value="20"/>

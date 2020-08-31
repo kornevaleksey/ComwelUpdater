@@ -4,25 +4,24 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.IO;
+using System.Linq;
+using System.Drawing;
 
 namespace Updater
 {
     public class Loader
     {
-        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         static HttpClient httpClient;
 
-        public string RemoteAddr { get; set; }
-        public int RemotePort { get; set; }
-        public string RemoteHashesFile { get; private set; }
-        public string LocalHashesFile { get; private set; }
+        public Uri RemoteAddr { get; set; }
 
         private readonly string scheme = "http";
 
-        public string ClientPath { get => "client"; }
+        private readonly int download_tries;
 
-        public Loader(string RemoteAddr, int RemotePort)
+        public Loader(string RemoteAddr, int RemotePort, int download_tries = 5)
         {
             UriBuilder uriBuilder = new UriBuilder
             {
@@ -30,6 +29,9 @@ namespace Updater
                 Host = RemoteAddr,
                 Port = RemotePort,
             };
+
+            this.RemoteAddr = uriBuilder.Uri;
+            this.download_tries = download_tries;
 
             httpClient = new HttpClient()
             {
@@ -38,28 +40,16 @@ namespace Updater
             //httpClient.DefaultRequestHeaders.Accept.Clear();
             //httpClient.DefaultRequestHeaders.Add("authorization", access_token); //if any
             //httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-
-            this.RemoteAddr = RemoteAddr;
-            this.RemotePort = RemotePort;
-
-            RemoteHashesFile = "hashes/hashes.txt";
         }
 
         public async Task<bool> CheckConnect()
         {
-            UriBuilder uriBuilder = new UriBuilder
-            {
-                Scheme = scheme,
-                Host = RemoteAddr,
-                Port = RemotePort,
-            };
-
             try
             {
-                HttpResponseMessage response = await httpClient.GetAsync(uriBuilder.ToString());
+                HttpResponseMessage response = await httpClient.GetAsync(RemoteAddr.ToString());
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
-                logger.Info(String.Format("Success connection to client remote storage on {0}", RemoteAddr));
+                logger.Info(String.Format("Success connection to client remote storage on {0}", RemoteAddr.ToString()));
                 return true;
             }
             catch (HttpRequestException e)
@@ -71,11 +61,8 @@ namespace Updater
 
         public async Task<bool> DownloadFile (string remoteRelativePath, string localFileName)
         {
-            UriBuilder uriBuilder = new UriBuilder
+            UriBuilder uriBuilder = new UriBuilder(RemoteAddr)
             {
-                Scheme = scheme,
-                Host = RemoteAddr,
-                Port = RemotePort,
                 Path = remoteRelativePath
             };
 
@@ -124,11 +111,62 @@ namespace Updater
             }
         }
 
-        public async Task<bool> DownloadHashes ()
+        public async Task<List<ClientFileInfo>> DownloadClientFiles (string remoteRelativePath, string LocalPath, List<ClientFileInfo> FilesList, EventHandler<UpdaterProgressEventArgs> ProgressUpdate=null)
         {
-            LocalHashesFile = Path.GetTempFileName();
-            return await DownloadFile(RemoteHashesFile, LocalHashesFile);
-        }
+            List<ClientFileInfo> failed_loads = new List<ClientFileInfo>();
+            FileChecker checker = new FileChecker();
+            long filessize = FilesList.Sum(ci => ci.FileSize);
+            long downloadsize=0;
 
+            ProgressUpdate?.Invoke(this, new UpdaterProgressEventArgs()
+            {
+                ProgressMax = filessize,
+                ProgressValue = 0,
+                InfoStr = "Начинаю скачивание файлов клиента",
+                InfoStrColor = Color.Black
+            });
+
+            foreach (ClientFileInfo clientFileInfo in FilesList)
+            {
+                int tries = 0;
+                bool file_ok = false;
+                string local_filename = LocalPath + "\\" + clientFileInfo.FileName;
+                while ((tries<download_tries)&&(file_ok==false))
+                {
+                    ProgressUpdate?.Invoke(this, new UpdaterProgressEventArgs()
+                    {
+                        ProgressMax = filessize,
+                        ProgressValue = downloadsize,
+                        InfoStr = String.Format("Скачиваю файл {0}", clientFileInfo.FileName),
+                        InfoStrColor = Color.Black
+                    });
+
+                    bool file_loaded = await DownloadFile(remoteRelativePath, local_filename);
+                    if (file_loaded)
+                    {
+                        FileInfo loaded_info = new FileInfo(local_filename);
+                        if (loaded_info.Length==clientFileInfo.FileSize)
+                        {
+                            ClientFileInfo loaded_file_info = await checker.GetFileInfo(local_filename);
+                            if (clientFileInfo.Hash.SequenceEqual(loaded_file_info.Hash))
+                            {
+                                file_ok = true;
+                            }
+                        }
+                    }
+                    tries++;
+                }
+
+                downloadsize += clientFileInfo.FileSize;
+
+                if (file_ok==false)
+                {
+                    logger.Info(String.Format("File {0} download error", local_filename));
+                    failed_loads.Add(clientFileInfo);
+                }
+            }
+
+            return failed_loads;
+        }
     }
 }

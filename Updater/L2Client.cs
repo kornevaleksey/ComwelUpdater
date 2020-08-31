@@ -187,19 +187,5 @@ namespace Updater
         }
     }
 
-    public class ClientFileInfo
-    {
-        public string FileName { get; set; }
-        public byte[] Hash { get; set; }
-        public long FileSize { get; set; }
-        public bool AllowLocalChange { get; set; }
-    }
 
-    public class UpdaterProgressEventArgs : EventArgs
-    {
-        public long ProgressMax { get; set; }
-        public long ProgressValue { get; set; }
-        public string InfoStr { get; set; }
-        public Color InfoStrColor { get; set; }
-    }
 }
