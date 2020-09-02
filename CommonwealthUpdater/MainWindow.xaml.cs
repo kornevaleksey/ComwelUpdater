@@ -102,7 +102,7 @@ namespace CommonwealthUpdater
                 };
             }
 
-            if (File.Exists(UpdaterConfig.ConfigFields.ClientFolder+UpdaterConfig.ClientExeFile))
+            if (File.Exists(UpdaterConfig.ClientExeFile))
             {
                 PlayL2.IsEnabled = true;
             }
@@ -178,7 +178,7 @@ namespace CommonwealthUpdater
         private void PlayL2_Click(object sender, RoutedEventArgs e)
         {
             Process proc = new Process();
-            proc.StartInfo.FileName = UpdaterConfig.ConfigFields.ClientFolder.AbsolutePath + UpdaterConfig.ClientExeFile;
+            proc.StartInfo.FileName = UpdaterConfig.ClientExeFile;
             proc.StartInfo.UseShellExecute = true;
             proc.StartInfo.Verb = "runas";
             proc.Start();
@@ -198,7 +198,7 @@ namespace CommonwealthUpdater
                 return;
             }
 
-            if (File.Exists(UpdaterConfig.ConfigFields.ClientFolder + UpdaterConfig.ClientExeFile))
+            if (File.Exists(UpdaterConfig.ClientExeFile))
             {
                 PlayL2.IsEnabled = true;
             }

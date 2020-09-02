@@ -15,7 +15,7 @@ namespace Config
 
         public string RemoteInfoFile { get => "info//clientinfo.inf"; }
         public string LocalInfoFile { get => LocalWorkingFolder + "//clientinfo.inf"; }
-        public string ClientExeFile { get => "system//l2.exe"; }
+        public string ClientExeFile { get => ConfigFields.ClientFolder.LocalPath+"//system//l2.exe"; }
         public string RemoteClientPath { get => "client/"; }
 
         private string LocalWorkingFolder { get => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\ComwelUpdater"; }

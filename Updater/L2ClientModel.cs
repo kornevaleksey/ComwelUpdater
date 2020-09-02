@@ -111,8 +111,8 @@ namespace Updater
         public async Task CreateModelFromDirectory (Uri localDir, bool complete=false, EventHandler<UpdaterProgressEventArgs> ProgressUpdate = null)
         {
             List<string> filenames_local;
-            if (Directory.Exists(localDir.AbsolutePath) == true)
-                filenames_local = await Task.Run(() => Directory.GetFiles(localDir.AbsolutePath, "*.*", SearchOption.AllDirectories).ToList());//.Select(fn => Path.GetRelativePath(localDir.LocalPath, fn)).ToList());
+            if (Directory.Exists(localDir.LocalPath) == true)
+                filenames_local = await Task.Run(() => Directory.GetFiles(localDir.LocalPath, "*.*", SearchOption.AllDirectories).ToList());//.Select(fn => Path.GetRelativePath(localDir.LocalPath, fn)).ToList());
             else
                 filenames_local = new List<string>();
 
