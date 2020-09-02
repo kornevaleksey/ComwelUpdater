@@ -13,30 +13,20 @@ namespace Updater
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        static HttpClient httpClient;
+        public static HttpClient httpClient;
 
-        public Uri RemoteAddr { get; set; }
+        public Uri RemoteAddr { get=>httpClient.BaseAddress; set=>httpClient.BaseAddress = value; }
 
-        private readonly string scheme = "http";
+        public event EventHandler<UpdaterProgressEventArgs> ProgressUpdate;
 
         private readonly int download_tries;
 
-        public Loader(string RemoteAddr, int RemotePort, int download_tries = 5)
+        public Loader(int download_tries = 5)
         {
-            UriBuilder uriBuilder = new UriBuilder
-            {
-                Scheme = scheme,
-                Host = RemoteAddr,
-                Port = RemotePort,
-            };
+            httpClient = new HttpClient();
 
-            this.RemoteAddr = uriBuilder.Uri;
             this.download_tries = download_tries;
 
-            httpClient = new HttpClient()
-            {
-                BaseAddress = new Uri(uriBuilder.ToString())
-            };
             //httpClient.DefaultRequestHeaders.Accept.Clear();
             //httpClient.DefaultRequestHeaders.Add("authorization", access_token); //if any
             //httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
@@ -111,20 +101,12 @@ namespace Updater
             }
         }
 
-        public async Task<List<ClientFileInfo>> DownloadClientFiles (string remoteRelativePath, string LocalPath, List<ClientFileInfo> FilesList, EventHandler<UpdaterProgressEventArgs> ProgressUpdate=null)
+        public async Task<List<ClientFileInfo>> DownloadClientFiles (string remoteRelativePath, string LocalPath, List<ClientFileInfo> FilesList)
         {
             List<ClientFileInfo> failed_loads = new List<ClientFileInfo>();
             FileChecker checker = new FileChecker();
             long filessize = FilesList.Sum(ci => ci.FileSize);
             long downloadsize=0;
-
-            ProgressUpdate?.Invoke(this, new UpdaterProgressEventArgs()
-            {
-                ProgressMax = filessize,
-                ProgressValue = 0,
-                InfoStr = "Начинаю скачивание файлов клиента",
-                InfoStrColor = Color.Black
-            });
 
             foreach (ClientFileInfo clientFileInfo in FilesList)
             {
@@ -141,13 +123,14 @@ namespace Updater
                         InfoStrColor = Color.Black
                     });
 
-                    bool file_loaded = await DownloadFile(remoteRelativePath, local_filename);
+                    string remote_uri = remoteRelativePath + clientFileInfo.FileName;
+                    bool file_loaded = await DownloadFile(remote_uri, local_filename);
                     if (file_loaded)
                     {
                         FileInfo loaded_info = new FileInfo(local_filename);
                         if (loaded_info.Length==clientFileInfo.FileSize)
                         {
-                            ClientFileInfo loaded_file_info = await checker.GetFileInfo(local_filename);
+                            ClientFileInfo loaded_file_info = await checker.GetFileInfo(local_filename, true);
                             if (clientFileInfo.Hash.SequenceEqual(loaded_file_info.Hash))
                             {
                                 file_ok = true;
@@ -168,5 +151,11 @@ namespace Updater
 
             return failed_loads;
         }
+    }
+
+    public class RemoteModelException : Exception
+    {
+        public Uri RemoteAddr { get; set; }
+        public string RemoteFile { get; set; }
     }
 }

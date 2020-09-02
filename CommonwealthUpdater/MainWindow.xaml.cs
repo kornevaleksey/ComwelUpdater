@@ -11,9 +11,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using Config;
-using Launcher;
 using Updater;
 using System.Diagnostics;
+using System.Net.Http;
 
 namespace CommonwealthUpdater
 {
@@ -25,31 +25,23 @@ namespace CommonwealthUpdater
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         static L2UpdaterConfig UpdaterConfig;
-        FileChecker checker;
         Loader loader;
-        L2ClientRemote clientRemote;
-        L2ClientLocal clientLocal;
-
+        L2Updater updater;
 
         public MainWindow()
         {
             UpdaterConfig = new L2UpdaterConfig();
 
-            loader = new Loader(UpdaterConfig.ConfigParameters["DownloadAddress"], Convert.ToInt32(UpdaterConfig.ConfigParameters["DownloadPort"]));
-
-            checker = new FileChecker();
-
-            Uri remoteaddr = new UriBuilder("http", UpdaterConfig.ConfigParameters["DownloadAddress"], Convert.ToInt32(UpdaterConfig.ConfigParameters["DownloadPort"])).Uri;
-
-            clientRemote = new L2ClientRemote(remoteaddr, loader);
-            clientLocal = new L2ClientLocal(UpdaterConfig.ConfigParameters["ClientFolder"], AppDomain.CurrentDomain.BaseDirectory + "clientinfo.inf");
+            loader = new Loader();
 
             InitializeComponent();
         }
 
         private async void updaterwindow_Initialized(object sender, EventArgs e)
         {
-            bool res = await CheckClientOnStart();
+            await UpdaterConfig.Read();
+            loader.RemoteAddr = UpdaterConfig.ConfigFields.DownloadAddress;
+            UpdaterSelect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         }
 
         private void MainGrid_MouseDown(object sender, MouseButtonEventArgs e)
@@ -70,18 +62,63 @@ namespace CommonwealthUpdater
             this.WindowState = WindowState.Minimized;
         }
 
-        private void UpdaterClick(object sender, RoutedEventArgs e)
+        private async void UpdaterClick(object sender, RoutedEventArgs e)
         {
             MainSelector.SelectedIndex = 0;
+            updater = new L2Updater(loader, UpdaterConfig);
+            updater.ProgressUpdate += UpdaterActionProgress;
+            loader.ProgressUpdate += UpdaterActionProgress;
+
+            try
+            {
+                await updater.FastLocalClientCheck();
+            }
+            catch (RemoteModelException exr)
+            {
+                MessageBox.Show(String.Format("Не могу соединиться с {0} для получения файла {1}",exr.RemoteAddr, exr.RemoteFile));
+                //SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                return;
+            }
+            catch (HttpRequestException exhttp)
+            {
+                MessageBox.Show(String.Format("Не могу соединиться с {0}", exhttp.TargetSite));
+                //SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                return;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                //SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                return;
+            }
+
+            if (updater.Difference.Count>0)
+            {
+                UpdaterActionProgress(this, new UpdaterProgressEventArgs() { ProgressValue=0, ProgressMax=100, InfoStr = "Обновление готово", InfoStrColor=System.Drawing.Color.Green });
+                UpdateL2.IsEnabled = true;
+                UpdateL2.ToolTip = new TextBlock()
+                {
+                    Text = String.Format("Обновление {0} файлов. Всего будет скачано: {1} МБ", updater.Difference.Count, updater.Difference.Sum(s => s.FileSize)/1024/1024)
+                };
+            }
+
+            if (File.Exists(UpdaterConfig.ConfigFields.ClientFolder+UpdaterConfig.ClientExeFile))
+            {
+                PlayL2.IsEnabled = true;
+            }
         }
 
         private void Settings_Click(object sender, RoutedEventArgs e)
         {
-            RemoteAddr.Text = UpdaterConfig.ConfigParameters[(string)RemoteAddr.Tag];
-            RemotePort.Text = UpdaterConfig.ConfigParameters[(string)RemotePort.Tag];
-            ClientDestination.Text = UpdaterConfig.ConfigParameters[(string)ClientDestination.Tag];
+            RemoteAddr.Text = UpdaterConfig.ConfigFields.DownloadAddress?.Host+":"+ UpdaterConfig.ConfigFields.DownloadAddress?.Port.ToString();
+            ClientDestination.Text = UpdaterConfig.ConfigFields.ClientFolder?.ToString();
 
             MainSelector.SelectedIndex = 1;
+        }
+
+        private void RecheckBtn_Click(object sender, RoutedEventArgs e)
+        {
+            MainSelector.SelectedIndex = 2;
         }
 
         #endregion
@@ -92,44 +129,40 @@ namespace CommonwealthUpdater
             CommonOpenFileDialog commonOpenFileDialog = new CommonOpenFileDialog()
             {
                 IsFolderPicker = true,
-                InitialDirectory = UpdaterConfig.ConfigParameters[(string)ClientDestination.Tag]
+                InitialDirectory = UpdaterConfig.ConfigFields.ClientFolder?.ToString()
             };
 
             if (commonOpenFileDialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
-                UpdaterConfig.ConfigParameters[(string)ClientDestination.Tag] = commonOpenFileDialog.FileName;
+                UpdaterConfig.ConfigFields.ClientFolder = new Uri(commonOpenFileDialog.FileName);
                 ClientDestination.Text = commonOpenFileDialog.FileName;
             }
         }
 
-        private void SettingField_Changed(object sender, TextChangedEventArgs e)
+        private void RemoteAddrChanged(object sender, TextChangedEventArgs e)
         {
-            UpdaterConfig.ConfigParameters[(string)((TextBox)sender).Tag] = ((TextBox)sender).Text;
+        }
 
-            UpdaterConfig.Write();
+        private async void BtnSettingsWrite_Click(object sender, RoutedEventArgs e)
+        {
+            if ((RemoteAddr.Text != "") && (ClientDestination.Text != ""))
+            {
+                UriBuilder remote = new UriBuilder()
+                {
+                    Host = RemoteAddr.Text.Split(":")[0],
+                    Port = Convert.ToInt32(RemoteAddr.Text.Split(":")[1])
+                };
+                UpdaterConfig.ConfigFields.DownloadAddress = remote.Uri;
+                UpdaterConfig.ConfigFields.ClientFolder = new Uri(ClientDestination.Text);
+                await UpdaterConfig.Write();
+            } else
+            {
+                MessageBox.Show("Не указано одно из значений!");
+            }
         }
         #endregion
 
         #region Updater tab events
-
-        List<ClientFileInfo> diff;
-
-        public async Task<bool> CheckClientOnStart()
-        {
-            await clientLocal.PrepareInfo();
-            await clientRemote.PrepareInfo();
-
-            diff = clientRemote.CompareToLocal(clientLocal);
-
-            if (diff.Count>0)
-            {
-                UpdateL2.IsEnabled = true;
-                PlayL2.Background = (SolidColorBrush)(new BrushConverter().ConvertFromString("Red"));
-                PlayL2.IsEnabled = clientLocal.ClientisRunnable;
-            }
-
-            return true;
-        }
 
         private void UpdaterActionProgress(object sender, UpdaterProgressEventArgs args)
         {
@@ -145,7 +178,7 @@ namespace CommonwealthUpdater
         private void PlayL2_Click(object sender, RoutedEventArgs e)
         {
             Process proc = new Process();
-            proc.StartInfo.FileName = clientLocal.Folder + "//system/l2.exe";
+            proc.StartInfo.FileName = UpdaterConfig.ConfigFields.ClientFolder.AbsolutePath + UpdaterConfig.ClientExeFile;
             proc.StartInfo.UseShellExecute = true;
             proc.StartInfo.Verb = "runas";
             proc.Start();
@@ -153,32 +186,85 @@ namespace CommonwealthUpdater
 
         private async void UpdateL2_Click(object sender, RoutedEventArgs e)
         {
-            if (diff.Count > 0)
+            try
             {
-                List<ClientFileInfo> error_load = await loader.DownloadClientFiles(clientRemote.Folder.ToString(), clientLocal.Folder.ToString(), diff);
-                if (error_load.Count > 0)
-                {
-                    UpdaterActionProgress(this, new UpdaterProgressEventArgs()
-                    {
-                        InfoStr = String.Format("Ошибка обновления! Не удалось скачать {0} файлов", error_load.Count),
-                        InfoStrColor = System.Drawing.Color.Red,
-                        ProgressMax = 0,
-                        ProgressValue = 0
-                    });
-                } else
-                {
-                    UpdaterActionProgress(this, new UpdaterProgressEventArgs()
-                    {
-                        InfoStr = "Обновление завершилось успешно",
-                        InfoStrColor = System.Drawing.Color.Green,
-                        ProgressMax = 100,
-                        ProgressValue = 100
-                    });
-                }
+                PlayL2.IsEnabled = false;
+                await updater.UpdateClient();
+                UpdateL2.IsEnabled = false;
+            }
+            catch (LoaderFilesLoadException exload)
+            {
+                MessageBox.Show(String.Format("Не могу скачать {0} файлов", exload.Files.Count));
+                return;
+            }
+
+            if (File.Exists(UpdaterConfig.ConfigFields.ClientFolder + UpdaterConfig.ClientExeFile))
+            {
+                PlayL2.IsEnabled = true;
             }
         }
+
         #endregion
 
+        #region Full check tab
+        private void FullCheckActionProgress(object sender, UpdaterProgressEventArgs args)
+        {
+            Dispatcher.BeginInvoke((Action)delegate ()
+            {
+                FullCheckPercentage.Maximum = args.ProgressMax;
+                FullCheckPercentage.Value = args.ProgressValue;
+                FullCheckLog.AppendText(args.InfoStr + Environment.NewLine);
+            });
+        }
 
+        private async void BtnFullCheck_Click(object sender, RoutedEventArgs e)
+        {
+            BtnFullCheck.IsEnabled = false;
+
+            updater = new L2Updater(loader, UpdaterConfig);
+            updater.ProgressUpdate += FullCheckActionProgress;
+            loader.ProgressUpdate += FullCheckActionProgress;
+
+            try
+            {
+                await updater.FullLocalClientCheck();
+            }
+            catch (RemoteModelException exr)
+            {
+                MessageBox.Show(String.Format("Не могу соединиться с {0} для получения файла {1}", exr.RemoteAddr, exr.RemoteFile));
+                SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                return;
+            }
+            catch (HttpRequestException exhttp)
+            {
+                MessageBox.Show(String.Format("Не могу соединиться с {0}", exhttp.TargetSite));
+                SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                return;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                return;
+            }
+
+            if (updater.Difference.Count > 0)
+            {
+                UpdateL2.IsEnabled = true;
+                UpdateL2.ToolTip = new TextBlock()
+                {
+                    Text = String.Format("Обновление {0} файлов. Всего будет скачано: {1}", updater.Difference.Count, updater.Difference.Sum(s => s.FileSize))
+                };
+            }
+
+            if (File.Exists(UpdaterConfig.ConfigFields.ClientFolder + UpdaterConfig.ClientExeFile))
+            {
+                PlayL2.IsEnabled = true;
+            }
+
+            BtnFullCheck.IsEnabled = true;
+        }
+
+        #endregion
     }
 }

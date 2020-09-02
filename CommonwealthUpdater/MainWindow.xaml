@@ -35,7 +35,7 @@
             <ColumnDefinition Width="10*"/>
             <ColumnDefinition Width="2*"/>
         </Grid.ColumnDefinitions>
-        <TabControl x:Name="MainSelector" Grid.Column="0" TabStripPlacement="Right">
+        <TabControl x:Name="MainSelector" Grid.Column="0" TabStripPlacement="Right" BorderThickness="0">
             <TabItem x:Name="UpdaterTab" IsSelected="True" Visibility="Collapsed">
                 <Grid x:Name="UpdaterGrid" Background="Ivory" MouseDown="MainGrid_MouseDown">
                     <Grid.ColumnDefinitions>
@@ -105,20 +105,13 @@
                             <Label Margin="5" FontSize="14">
                                 Адрес сайта:
                             </Label>
-                            <TextBox x:Name="RemoteAddr" Tag="DownloadAddress" Margin="5" Background="#FFF1F15E" VerticalContentAlignment="Center" FontSize="14" TextChanged="SettingField_Changed">
+                            <TextBox x:Name="RemoteAddr" Tag="DownloadAddress" Margin="5" Background="#FFF1F15E" VerticalContentAlignment="Center" FontSize="14" TextChanged="RemoteAddrChanged">
                             </TextBox>
                         </DockPanel>
-                        <DockPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="7" HorizontalAlignment="Left" VerticalAlignment="Center">
-                            <Label Margin="5" FontSize="14" DockPanel.Dock="Left">
-                                Порт:
-                            </Label>
-                            <TextBox x:Name="RemotePort" Margin="5" Tag="DownloadPort" Background="#FFF1F15E" Width="100" DockPanel.Dock="Left" VerticalContentAlignment="Center" FontSize="14">
-                            </TextBox>
-                        </DockPanel>
-                        <Label Grid.Column="0" Grid.ColumnSpan="6" Grid.Row="4" FontSize="16">
+                        <Label Grid.Column="0" Grid.ColumnSpan="6" Grid.Row="3" FontSize="16">
                             Расположение клиента Lineage II
                         </Label>
-                        <DockPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <DockPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                             <Button x:Name="BtnSelect" Background="LightBlue" Margin="5" Click="BtnSelect_Click">
                                 <Button.Resources>
                                     <Style TargetType="{x:Type Border}">
@@ -130,6 +123,14 @@
                             <TextBox x:Name="ClientDestination" Tag="ClientFolder" Margin="5" Background="#FFF1F15E" IsReadOnly="True" VerticalContentAlignment="Center" FontSize="14">
                             </TextBox>
                         </DockPanel>
+                        <Button x:Name="BtnSettingsWrite" Grid.Row="7" Grid.Column="5" Grid.ColumnSpan="2" Background="LightBlue" Margin="5" Click="BtnSettingsWrite_Click">
+                            <Button.Resources>
+                                <Style TargetType="{x:Type Border}">
+                                    <Setter Property="CornerRadius" Value="10"/>
+                                </Style>
+                            </Button.Resources>
+                            <TextBlock FontSize="14"><Run Text="Сохранить"/></TextBlock>
+                        </Button>
                     </Grid>
                 </TabItem.Content>
             </TabItem>
@@ -164,7 +165,7 @@
                             <RowDefinition Height="1*"/>
                             <RowDefinition Height="1*"/>
                         </Grid.RowDefinitions>
-                        <Button x:Name="BtnFullCheck" Grid.Column="4" Grid.ColumnSpan="4" Grid.Row="1" Grid.RowSpan="2" Background="DarkOrange" Margin="5">
+                        <Button x:Name="BtnFullCheck" Grid.Column="4" Grid.ColumnSpan="4" Grid.Row="1" Grid.RowSpan="2" Background="DarkOrange" Margin="5" Click="BtnFullCheck_Click">
                             <Button.Resources>
                                 <Style TargetType="{x:Type Border}">
                                     <Setter Property="CornerRadius" Value="10"/>
@@ -183,18 +184,18 @@
 
         <DockPanel Grid.Column="1" Background="#FFF1F15E" VerticalAlignment="Stretch" LastChildFill="False">
             <DockPanel DockPanel.Dock="Top" Height="30">
-                <Button Width="20" DockPanel.Dock="Left" Margin="5" BorderThickness="0" Click="Button_Click_1">
+                <Button Width="20" DockPanel.Dock="Left" Margin="5" BorderThickness="0" Style="{StaticResource ImageButton}" Click="Button_Click_1">
                     <Button.Background>
                         <ImageBrush ImageSource="images/minimize.gif"/>
                     </Button.Background>
                 </Button>
-                <Button Width="20" DockPanel.Dock="Left" Margin="5" BorderThickness="0" Click="Button_Click">
+                <Button Width="20" DockPanel.Dock="Left" Margin="5" BorderThickness="0" Style="{StaticResource ImageButton}" Click="Button_Click">
                     <Button.Background>
                         <ImageBrush ImageSource="images/close.gif"/>
                     </Button.Background>
                 </Button>
             </DockPanel>
-            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5,5,5,15" BorderBrush="Transparent"  Style="{StaticResource ImageButton}" AutomationProperties.HelpText="Играть на сервере Commonwealth" Click="UpdaterClick" ToolTip="Обновление клиента">
+            <Button x:Name="UpdaterSelect" DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5,5,5,15" BorderBrush="Transparent"  Style="{StaticResource ImageButton}" AutomationProperties.HelpText="Играть на сервере Commonwealth" Click="UpdaterClick" ToolTip="Обновление клиента">
                 <Button.Resources>
                     <Style TargetType="{x:Type Border}">
                         <Setter Property="CornerRadius" Value="10"/>
@@ -204,7 +205,7 @@
                     <ImageBrush ImageSource="images/l2.png"/>
                 </Button.Background>
             </Button>
-            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}" AutomationProperties.HelpText="Настроить лаунчер" Click="Settings_Click" ToolTip="Настройки">
+            <Button x:Name="SettingsBtn" DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}" AutomationProperties.HelpText="Настроить лаунчер" Click="Settings_Click" ToolTip="Настройки">
                 <Button.Resources>
                     <Style TargetType="{x:Type Border}">
                         <Setter Property="CornerRadius" Value="10"/>
@@ -214,7 +215,7 @@
                     <ImageBrush ImageSource="images/settings.png" Stretch="Fill"/>
                 </Button.Background>
             </Button>
-            <Button DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}" AutomationProperties.HelpText="Проверить полностью" ToolTip="Полная проверка">
+            <Button x:Name="RecheckBtn" DockPanel.Dock="Bottom" Height="50" Width="50" Margin="5" BorderBrush="Transparent" Style="{StaticResource ImageButton}" AutomationProperties.HelpText="Проверить полностью" ToolTip="Полная проверка" Click="RecheckBtn_Click">
                 <Button.Resources>
                     <Style TargetType="{x:Type Border}">
                         <Setter Property="CornerRadius" Value="10"/>
@@ -241,7 +242,7 @@
                     </Style>
                 </Button.Resources>
                 <Button.Background>
-                    <ImageBrush ImageSource="images/recheck.png"/>
+                    <ImageBrush ImageSource="images/flag_square.png"/>
                 </Button.Background>
             </Button>
         </DockPanel>

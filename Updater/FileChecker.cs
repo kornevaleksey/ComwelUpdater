@@ -21,19 +21,22 @@ namespace Updater
             sha256 = SHA256.Create();
         }
 
-        public async Task<ClientFileInfo> GetFileInfo (string filename)
+        public async Task<ClientFileInfo> GetFileInfo (string filename, bool complete = false)
         {
             ClientFileInfo clientFileInfo = new ClientFileInfo
             {
                 FileName = filename,
                 AllowLocalChange = false,
-                FileSize = new FileInfo(filename).Length
+                FileSize = new FileInfo(filename).Length,
+                Changed = new FileInfo(filename).LastWriteTimeUtc
             };
 
-            byte[] hash = await Task.Run(() => sha256.ComputeHash(File.OpenRead(filename)));
-
-            clientFileInfo.Hash = new byte[hash.Length];
-            hash.CopyTo(clientFileInfo.Hash, 0);
+            if (complete)
+            {
+                byte[] hash = await Task.Run(() => sha256.ComputeHash(File.OpenRead(filename)));
+                clientFileInfo.Hash = new byte[hash.Length];
+                hash.CopyTo(clientFileInfo.Hash, 0);
+            }
 
             return clientFileInfo;
         }

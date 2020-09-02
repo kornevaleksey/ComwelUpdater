@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.IO;
 
@@ -14,38 +13,42 @@ namespace Config
 
         public string FileName { get; }
 
-        public Dictionary<string, string> ConfigParameters { get; set; }
+        public string RemoteInfoFile { get => "info//clientinfo.inf"; }
+        public string LocalInfoFile { get => LocalWorkingFolder + "//clientinfo.inf"; }
+        public string ClientExeFile { get => "system//l2.exe"; }
+        public string RemoteClientPath { get => "client/"; }
+
+        private string LocalWorkingFolder { get => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\ComwelUpdater"; }
+
+        
+
+        public class Fields
+        {
+            public Uri DownloadAddress { get; set; }
+            public Uri ClientFolder { get; set; }
+        }
+
+        public Fields ConfigFields;
 
         public L2UpdaterConfig()
         {
-            ConfigParameters = new Dictionary<string, string>();
+            ConfigFields = new Fields();
 
-            FileName = AppDomain.CurrentDomain.BaseDirectory + "\\l2updater.json";
+            if (!Directory.Exists(LocalWorkingFolder))
+                Directory.CreateDirectory(LocalWorkingFolder);
+
+            FileName = LocalWorkingFolder + "\\l2updater.json";
             logger.Info("Select config file " + FileName);
-
-            if (File.Exists(FileName))
-            {
-                Read();
-
-            } else
-            {
-                logger.Info("Config file doesn't exist, creating new");
-                SetDefault();
-                Write();
-            }
         }
 
-        public bool Read()
+        public async Task<bool> Read()
         {
             logger.Info("Start loading config file");
             try
             {
-                string configString = File.ReadAllText(FileName);
-                ConfigParameters = JsonSerializer.Deserialize<Dictionary<string, string>>(configString);
-                foreach (var item in ConfigParameters)
-                {
-                    logger.Info("Reading key "+item.Key+" with value "+item.Value);
-                }
+                string configString = await File.ReadAllTextAsync(FileName);
+                ConfigFields = JsonSerializer.Deserialize<Fields>(configString);
+                logger.Info("Reading config fields");
             }
             catch (Exception ex)
             {
@@ -57,13 +60,13 @@ namespace Config
             return true;
         }
 
-        public bool Write()
+        public async Task<bool> Write()
         {
             logger.Info("Start writing config file");
             try
             {
-                string configString = JsonSerializer.Serialize<Dictionary<string, string>>(ConfigParameters);
-                File.WriteAllText(FileName, configString);
+                string configString = JsonSerializer.Serialize<Fields>(ConfigFields);
+                await File.WriteAllTextAsync(FileName, configString);
                 logger.Info("Writing text in config file: " + configString);
             }
             catch (Exception ex)
@@ -73,13 +76,6 @@ namespace Config
             }
             logger.Info("Config file writed");
             return true;
-        }
-        public void SetDefault()
-        {
-            ConfigParameters.Add("DownloadAddress", "localhost");
-            ConfigParameters.Add("DownloadPort", "9000");
-            ConfigParameters.Add("DownloadMaxSpeed", "1000");
-            ConfigParameters.Add("ClientFolder", "c:\\Lineage2");
         }
 
     }

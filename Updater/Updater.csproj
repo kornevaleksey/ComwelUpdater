@@ -9,4 +9,8 @@
     <PackageReference Include="NLog" Version="4.7.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Config\Config.csproj" />
+  </ItemGroup>
+
 </Project>

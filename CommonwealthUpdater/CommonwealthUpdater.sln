@@ -12,6 +12,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Config", "..\Config\Config.csproj", "{516AA3C9-3E82-4C5F-94F1-5FB912AEAE31}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Updater", "..\Updater\Updater.csproj", "{FE0A9E6B-CCF6-4D6A-A03D-EC02659A920C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{516AA3C9-3E82-4C5F-94F1-5FB912AEAE31} = {516AA3C9-3E82-4C5F-94F1-5FB912AEAE31}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
