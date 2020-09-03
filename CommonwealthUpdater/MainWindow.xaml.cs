@@ -22,7 +22,7 @@ namespace CommonwealthUpdater
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private static NLog.Logger logger;// = NLog.LogManager.GetCurrentClassLogger();
 
         static L2UpdaterConfig UpdaterConfig;
         Loader loader;
@@ -30,6 +30,9 @@ namespace CommonwealthUpdater
 
         public MainWindow()
         {
+            NLog.LogManager.LoadConfiguration(AppDomain.CurrentDomain.BaseDirectory+"\\nlog.config");
+            logger = NLog.LogManager.GetCurrentClassLogger();
+            
             UpdaterConfig = new L2UpdaterConfig();
 
             loader = new Loader();
@@ -39,6 +42,7 @@ namespace CommonwealthUpdater
 
         private async void updaterwindow_Initialized(object sender, EventArgs e)
         {
+            logger.Info("Start init updater");
             await UpdaterConfig.Read();
             loader.RemoteAddr = UpdaterConfig.ConfigFields.DownloadAddress;
             UpdaterSelect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
