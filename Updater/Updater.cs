@@ -117,10 +117,10 @@ namespace Updater
             }
         }
 
-        public async Task FullLocalClientCheck()
+        public async Task FullLocalClientCheck(bool saveclientmodel=false)
         {
             //Load remote model client
-            loader.RemoteAddr = config.ConfigFields.DownloadAddress;
+            //loader.RemoteAddr = config.ConfigFields.DownloadAddress;
             remoteClient = new L2ClientRemote(loader);
             await remoteClient.LoadRemoteModel(config.RemoteInfoFile);
 
@@ -140,6 +140,9 @@ namespace Updater
             await localClient.CreateModelFromDirectory(config.ConfigFields.ClientFolder, true, ProgressUpdate);
             logger.Info("Make client model from directory: " + config.ConfigFields.ClientFolder.AbsolutePath);
             ProgressIndicate(0, 100, "Определена информация о файлах клиента", Color.Black);
+
+            if (saveclientmodel)
+                await localClient.WriteClientModel(config.LocalInfoFile);
 
             //await localClient.WriteClientModel("C:\\Users\\korall_admin\\AppData\\Roaming\\ComwelUpdater\\clientinfo.inf");
 

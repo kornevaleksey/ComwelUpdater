@@ -174,7 +174,7 @@
                             <TextBlock FontSize="14" TextWrapping="Wrap" TextAlignment="Center"><Run Text="Полная проверка"/></TextBlock>
                         </Button>
                         <ProgressBar x:Name="FullCheckPercentage" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="10" Background="DarkGray" Foreground="#FFF1F15E"/>
-                        <TextBox x:Name="FullCheckLog" Grid.Column="0" Grid.ColumnSpan="12" Grid.Row="6" Grid.RowSpan="5" IsReadOnly="True">
+                        <TextBox x:Name="FullCheckLog" Grid.Column="0" Grid.ColumnSpan="12" Grid.Row="6" Grid.RowSpan="5" IsReadOnly="True" TextWrapping="Wrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                         </TextBox>
                     </Grid>
                 </TabItem.Content>

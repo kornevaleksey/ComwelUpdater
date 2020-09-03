@@ -86,12 +86,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="images\close.gif" />
+    <Resource Include="images\close.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="images\flag_square.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="images\info.png" />
-    <Resource Include="images\l2.png" />
+    <Resource Include="images\info.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="images\l2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="images\minimize.gif" />
     <Resource Include="images\recheck.png" />
     <Resource Include="images\settings.png" />

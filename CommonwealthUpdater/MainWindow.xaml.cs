@@ -227,7 +227,7 @@ namespace CommonwealthUpdater
 
             try
             {
-                await updater.FullLocalClientCheck();
+                await updater.FullLocalClientCheck(true);
             }
             catch (RemoteModelException exr)
             {
