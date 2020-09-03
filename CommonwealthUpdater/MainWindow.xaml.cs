@@ -190,21 +190,34 @@ namespace CommonwealthUpdater
 
         private async void UpdateL2_Click(object sender, RoutedEventArgs e)
         {
-            try
+            if (BtnUpdateL2Text.Text.Equals("Обновить"))
             {
-                PlayL2.IsEnabled = false;
-                await updater.UpdateClient();
-                UpdateL2.IsEnabled = false;
-            }
-            catch (LoaderFilesLoadException exload)
-            {
-                MessageBox.Show(String.Format("Не могу скачать {0} файлов", exload.Files.Count));
-                return;
-            }
+                UpdateL2.Tag = false;
+                BtnUpdateL2Text.Text = "Остановить";
+                try
+                {
+                    PlayL2.IsEnabled = false;
+                    await updater.UpdateClient();
+                    UpdateL2.IsEnabled = false;
+                }
+                catch (LoaderFilesLoadException exload)
+                {
+                    MessageBox.Show(String.Format("Не могу скачать {0} файлов", exload.Files.Count));
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                    return;
+                }
 
-            if (File.Exists(UpdaterConfig.ClientExeFile))
+                if (File.Exists(UpdaterConfig.ClientExeFile))
+                {
+                    PlayL2.IsEnabled = true;
+                }
+            } else
             {
-                PlayL2.IsEnabled = true;
+                BtnUpdateL2Text.Text = "Обновить";
             }
         }
 

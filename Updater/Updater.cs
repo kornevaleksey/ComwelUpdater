@@ -62,17 +62,17 @@ namespace Updater
                 logger.Info("Read client model from " + config.LocalInfoFile);
                 ProgressIndicate(0, 100, "Считана информация о клиенте", Color.Black);
 
-                if (Directory.Exists(config.ConfigFields.ClientFolder.AbsolutePath))
+                if (Directory.Exists(config.ConfigFields.ClientFolder.LocalPath))
                 {
                     localClient = new L2ClientLocal();
                     //Make short model of client (without hashes)
                     await localClient.CreateModelFromDirectory(config.ConfigFields.ClientFolder);
-                    logger.Info("Make client model from directory: " + config.ConfigFields.ClientFolder.AbsolutePath);
+                    logger.Info("Make client model from directory: " + config.ConfigFields.ClientFolder.LocalPath);
                     ProgressIndicate(50, 100, "Составлен список файлов клиента", Color.Black);
                 } else
                 {
-                    ClientDirectoryException ex = new ClientDirectoryException() { Directory = config.ConfigFields.ClientFolder.AbsolutePath };
-                    logger.Error(ex, "Impossible to make client model from non-existent directory: " + config.ConfigFields.ClientFolder.AbsolutePath);
+                    ClientDirectoryException ex = new ClientDirectoryException() { Directory = config.ConfigFields.ClientFolder.LocalPath };
+                    logger.Error(ex, "Impossible to make client model from non-existent directory: " + config.ConfigFields.ClientFolder.LocalPath);
                     throw ex; 
                 }
 
@@ -138,7 +138,7 @@ namespace Updater
             //Make complete model of client
             localClient = new L2ClientLocal();
             await localClient.CreateModelFromDirectory(config.ConfigFields.ClientFolder, true, ProgressUpdate);
-            logger.Info("Make client model from directory: " + config.ConfigFields.ClientFolder.AbsolutePath);
+            logger.Info("Make client model from directory: " + config.ConfigFields.ClientFolder.LocalPath);
             ProgressIndicate(0, 100, "Определена информация о файлах клиента", Color.Black);
 
             if (saveclientmodel)

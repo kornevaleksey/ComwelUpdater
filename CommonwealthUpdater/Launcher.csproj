@@ -13,6 +13,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="imagesbeauty\check.png" />
+    <None Remove="imagesbeauty\gudilap.png" />
+    <None Remove="imagesbeauty\settings.png" />
+    <None Remove="imagesbeauty\update.png" />
+    <None Remove="imagesbeauty\vopros.png" />
+    <None Remove="imagesbeauty\x.png" />
+    <None Remove="imagesbeauty\_.png" />
+    <None Remove="imagesbeauty\_.svg" />
     <None Remove="images\close.gif" />
     <None Remove="images\flag_square.png" />
     <None Remove="images\info.png" />
@@ -86,6 +94,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="imagesbeauty\check.png" />
+    <Resource Include="imagesbeauty\gudilap.png" />
+    <Resource Include="imagesbeauty\settings.png" />
+    <Resource Include="imagesbeauty\update.png" />
+    <Resource Include="imagesbeauty\vopros.png" />
+    <Resource Include="imagesbeauty\x.png" />
+    <Resource Include="imagesbeauty\_.png" />
+    <Resource Include="imagesbeauty\_.svg" />
     <Resource Include="images\close.gif">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
