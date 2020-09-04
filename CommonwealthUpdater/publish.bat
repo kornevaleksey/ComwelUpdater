@@ -1,1 +1,1 @@
-dotnet publish -r win-x86 -c Release /p:PublishSingleFile=true Launcher.csproj
+dotnet publish -r win-x86 -c Release /p:PublishSingleFile=true --no-self-contained Launcher.csproj
