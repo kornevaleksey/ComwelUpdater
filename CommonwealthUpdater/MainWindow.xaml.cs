@@ -25,8 +25,10 @@ namespace CommonwealthUpdater
         private static NLog.Logger logger;// = NLog.LogManager.GetCurrentClassLogger();
 
         static L2UpdaterConfig UpdaterConfig;
-        Loader loader;
+        readonly Loader loader;
         L2Updater updater;
+
+        Task UpdaterTask;
 
         public MainWindow()
         {
@@ -36,6 +38,8 @@ namespace CommonwealthUpdater
             UpdaterConfig = new L2UpdaterConfig();
 
             loader = new Loader();
+
+            updater = new L2Updater(loader, UpdaterConfig);
 
             InitializeComponent();
         }
@@ -66,44 +70,26 @@ namespace CommonwealthUpdater
             this.WindowState = WindowState.Minimized;
         }
 
-        private async void UpdaterClick(object sender, RoutedEventArgs e)
+        private void UpdaterClick(object sender, RoutedEventArgs e)
         {
             MainSelector.SelectedIndex = 0;
-            updater = new L2Updater(loader, UpdaterConfig);
-            updater.ProgressUpdate += UpdaterActionProgress;
-            loader.ProgressUpdate += UpdaterActionProgress;
 
-            try
+            if (updater.IsBusy == false)
             {
-                await updater.FastLocalClientCheck();
-            }
-            catch (RemoteModelException exr)
-            {
-                MessageBox.Show(String.Format("Не могу соединиться с {0} для получения файла {1}",exr.RemoteAddr, exr.RemoteFile));
-                //SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                return;
-            }
-            catch (HttpRequestException exhttp)
-            {
-                MessageBox.Show(String.Format("Не могу соединиться с {0}", exhttp.TargetSite));
-                //SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                return;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-                //SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                return;
-            }
 
-            if (updater.Difference.Count>0)
-            {
-                UpdaterActionProgress(this, new UpdaterProgressEventArgs() { ProgressValue=0, ProgressMax=100, InfoStr = "Обновление готово", InfoStrColor=System.Drawing.Color.Green });
-                UpdateL2.IsEnabled = true;
-                UpdateL2.ToolTip = new TextBlock()
+                updater.ClientCheckUpdate += ClientCheckUpdate;
+                updater.ClientCheckFinished += ClientCheckFinish;
+                loader.LoaderProgress += ClientLoadUpdate;
+
+                InfoBlock.Text = "Проверка клиента игры Lineage II";
+
+                try
                 {
-                    Text = String.Format("Обновление {0} файлов. Всего будет скачано: {1} МБ", updater.Difference.Count, updater.Difference.Sum(s => s.FileSize)/1024/1024)
-                };
+                    updater.FastLocalClientCheck();
+                }
+                finally
+                {
+                }
             }
 
             if (File.Exists(UpdaterConfig.ClientExeFile))
@@ -168,14 +154,66 @@ namespace CommonwealthUpdater
 
         #region Updater tab events
 
-        private void UpdaterActionProgress(object sender, UpdaterProgressEventArgs args)
+        private void ClientCheckFinish (object sender, ClientCheckFinishEventArgs args)
+        {
+            Dispatcher.BeginInvoke((Action)delegate ()
+            {
+                updatepercentage.Maximum = 0;
+                updatepercentage.Value = 0;
+                InfoBlock.Text = args.FinishMessage;
+                InfoBlock.Foreground = args.UpdateRequired? Brushes.Black : Brushes.Green;
+
+                if (updater.Difference?.Count > 0)
+                {
+                    UpdateL2.IsEnabled = true;
+                    UpdateL2.ToolTip = new TextBlock()
+                    {
+                        Text = String.Format("Обновление {0} файлов. Всего будет скачано: {1} МБ, необходимое место на диске {2}",
+                        updater.Difference.Count,
+                        updater.Difference.Sum(s => s.FileSizeCompressed) / 1024 / 1024,
+                        updater.Difference.Sum(s => s.FileSize) / 1024 / 1024)
+                    };
+                }
+
+                updater.ClientCheckUpdate -= ClientCheckUpdate;
+                updater.ClientCheckFinished -= ClientCheckFinish;
+                loader.LoaderProgress -= ClientLoadUpdate;
+            });
+        }
+
+        private void ClientCheckUpdate(object sender, ClientCheckUpdateEventArgs args)
         {
             Dispatcher.BeginInvoke((Action)delegate ()
             {
                 updatepercentage.Maximum = args.ProgressMax;
                 updatepercentage.Value = args.ProgressValue;
                 InfoBlock.Text = args.InfoStr;
-                InfoBlock.Foreground = new SolidColorBrush(Color.FromArgb(args.InfoStrColor.A, args.InfoStrColor.R, args.InfoStrColor.G, args.InfoStrColor.B));
+                InfoBlock.Foreground = Brushes.Black;
+            });
+        }
+
+        private void ClientLoadUpdate(object sender, LoaderProgressEventArgs args)
+        {
+            Dispatcher.BeginInvoke((Action)delegate ()
+            {
+                updatepercentage.Maximum = 100;
+                updatepercentage.Value = args.Percentage*100.0;
+                InfoBlock.Text = String.Format("Скачиваю файл {0}", args.FileName);
+                InfoBlock.Foreground = Brushes.Black;
+            });
+        }
+
+        private void ClientUpdateFinished (object sender, EventArgs args)
+        {
+            Dispatcher.BeginInvoke((Action)delegate ()
+            {
+                UpdateL2.IsEnabled = false;
+                PlayL2.IsEnabled = updater.ClientCanRun;
+
+                updatepercentage.Maximum = 100;
+                updatepercentage.Value = 100;
+                InfoBlock.Text = String.Format("Игра обновлена");
+                InfoBlock.Foreground = Brushes.Green;
             });
         }
 
@@ -188,43 +226,37 @@ namespace CommonwealthUpdater
             proc.Start();
         }
 
-        private async void UpdateL2_Click(object sender, RoutedEventArgs e)
+        private void UpdateL2_Click(object sender, RoutedEventArgs e)
         {
             if (BtnUpdateL2Text.Text.Equals("Обновить"))
             {
                 UpdateL2.Tag = false;
                 BtnUpdateL2Text.Text = "Остановить";
+
+                loader.LoaderProgress += ClientLoadUpdate;
+                updater.ClientUpdateFinished += ClientUpdateFinished;
+
                 try
                 {
                     PlayL2.IsEnabled = false;
-                    await updater.UpdateClient();
-                    UpdateL2.IsEnabled = false;
+                    UpdaterTask = updater.UpdateClient();
                 }
-                catch (LoaderFilesLoadException exload)
+                finally
                 {
-                    MessageBox.Show(String.Format("Не могу скачать {0} файлов", exload.Files.Count));
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                    return;
                 }
 
-                if (File.Exists(UpdaterConfig.ClientExeFile))
-                {
-                    PlayL2.IsEnabled = true;
-                }
             } else
             {
                 BtnUpdateL2Text.Text = "Обновить";
+                Task.
+                UpdaterTask.stop
             }
         }
 
         #endregion
 
         #region Full check tab
-        private void FullCheckActionProgress(object sender, UpdaterProgressEventArgs args)
+        private void FullCheckActionProgress(object sender, ClientCheckUpdateEventArgs args)
         {
             Dispatcher.BeginInvoke((Action)delegate ()
             {
@@ -234,17 +266,27 @@ namespace CommonwealthUpdater
             });
         }
 
+        private void FullCheckLoaderProgress(object sender, LoaderProgressEventArgs args)
+        {
+            Dispatcher.BeginInvoke((Action)delegate ()
+            {
+                FullCheckPercentage.Maximum = 100;
+                FullCheckPercentage.Value = args.Percentage*100.0;
+                FullCheckLog.AppendText(String.Format("Скачиваю файл {0}{1}",args.FileName, Environment.NewLine));
+            });
+        }
+
         private async void BtnFullCheck_Click(object sender, RoutedEventArgs e)
         {
             BtnFullCheck.IsEnabled = false;
 
             updater = new L2Updater(loader, UpdaterConfig);
-            updater.ProgressUpdate += FullCheckActionProgress;
-            loader.ProgressUpdate += FullCheckActionProgress;
+            updater.ClientCheckUpdate += FullCheckActionProgress;
+            loader.LoaderProgress += FullCheckLoaderProgress;
 
             try
             {
-                await updater.FullLocalClientCheck(true);
+                await updater.FullLocalClientCheck();
             }
             catch (RemoteModelException exr)
             {

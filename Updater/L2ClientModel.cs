@@ -15,6 +15,7 @@ namespace Updater
         public DateTime Changed { get; set; }
         public uint FilesCount { get; set; }
         public long ClientSize { get; set; }
+        public long ClientCompressedSize { get; set; }
         public List<ClientFileInfo> FilesInfo { get; set; }
     }
 
@@ -22,9 +23,11 @@ namespace Updater
     {
         public string FileName { get; set; }
         public long FileSize { get; set; }
+        public long FileSizeCompressed { get; set; }
         public DateTime Changed { get; set; }
         public byte[] Hash { get; set; }
         public bool AllowLocalChange { get; set; }
+        public bool ImportantFile { get; set; }
 
         public override bool Equals(object obj)
         {
@@ -65,39 +68,34 @@ namespace Updater
     public abstract class L2ClientBase
     {
         protected static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        
+
+        public FileChecker Checker { get; }
         public ClientModel ClientInfo { get; protected set; }
 
         public L2ClientBase()
         {
+            Checker = new FileChecker();
         }
 
         public async Task WriteClientModel(string filename)
         {
-            try
-            {
-                var serlist = JsonSerializer.Serialize(ClientInfo);
-                await File.WriteAllTextAsync(filename, serlist);
-                logger.Info(String.Format("Writing model info into file {0}", filename));
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, String.Format("Writing file {0} error!", filename));
-            }
+            logger.Info(String.Format("Read client model from file {0}", filename));
+
+            var serlist = JsonSerializer.Serialize(ClientInfo);
+            await File.WriteAllTextAsync(filename, serlist);
+
+            logger.Info(String.Format("Finish writing model info file {0}", filename));
         }
 
         public async Task ReadClientModel(string filename)
         {
-            try
-            {
-                string deserial = await File.ReadAllTextAsync(filename);
-                ClientInfo = JsonSerializer.Deserialize<ClientModel>(deserial);
-                logger.Info(String.Format("Reading model info from file {0}", filename));
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, String.Format("Reading file {0} error!", filename));
-            }
+            logger.Info("Read client model from file {0}", filename);
+
+            if (File.Exists(filename) == false) throw new FileNotFoundException("File not found", filename);
+            string deserial = await File.ReadAllTextAsync(filename);
+            ClientInfo = JsonSerializer.Deserialize<ClientModel>(deserial);
+
+            logger.Info(String.Format("Finish read client model from file {0}", filename));
         }
     }
 
@@ -108,7 +106,7 @@ namespace Updater
         {
         }
 
-        public async Task CreateModelFromDirectory (Uri localDir, bool complete=false, EventHandler<UpdaterProgressEventArgs> ProgressUpdate = null)
+        public async Task CreateModelFromDirectory (Uri localDir)
         {
             List<string> filenames_local;
             if (Directory.Exists(localDir.LocalPath) == true)
@@ -124,25 +122,28 @@ namespace Updater
                 FilesInfo = new List<ClientFileInfo>()
             };
 
-            FileChecker checker = new FileChecker();
+            ClientInfo.FilesInfo = await Checker.GetFilesListInfo(filenames_local, localDir.LocalPath);
+            ClientInfo.ClientSize += ClientInfo.FilesInfo.Sum( ci => ci.FileSize);
+        }
 
-            int progress_counter = 0;
+        public async Task CreateModelFromDirectory(Uri localDir, bool complete = false)
+        {
+            List<string> filenames_local;
+            if (Directory.Exists(localDir.LocalPath) == true)
+                filenames_local = await Task.Run(() => Directory.GetFiles(localDir.LocalPath, "*.*", SearchOption.AllDirectories).ToList());//.Select(fn => Path.GetRelativePath(localDir.LocalPath, fn)).ToList());
+            else
+                filenames_local = new List<string>();
 
-            foreach (string filename in filenames_local)
+            ClientInfo = new ClientModel()
             {
-                ProgressUpdate?.Invoke(this, new UpdaterProgressEventArgs()
-                {
-                    ProgressMax = filenames_local.Count,
-                    ProgressValue = progress_counter++,
-                    InfoStr = String.Format("Обработка файла {0}", filename),
-                    InfoStrColor = Color.Black
-                });
+                Changed = DateTime.Now,
+                FilesCount = (uint)filenames_local.Count,
+                ClientSize = 0,
+                FilesInfo = new List<ClientFileInfo>()
+            };
 
-                ClientFileInfo fileinfo = await checker.GetFileInfo(filename, complete);
-                fileinfo.FileName = Path.GetRelativePath(localDir.LocalPath, filename);
-                ClientInfo.ClientSize += fileinfo.FileSize;
-                ClientInfo.FilesInfo.Add(fileinfo);
-            }
+            ClientInfo.FilesInfo = await Checker.GetFilesListInfo(filenames_local, localDir.LocalPath, complete);
+            ClientInfo.ClientSize += ClientInfo.FilesInfo.Sum(ci => ci.FileSize);
         }
 
     }
@@ -162,16 +163,19 @@ namespace Updater
 
             try
             {
-
-                if (await loader.DownloadFile(remoteModelAddr, temporary_file))
-                {
-                    await ReadClientModel(temporary_file);
-                }
+                await loader.DownloadFile(remoteModelAddr, temporary_file);
+                await ReadClientModel(temporary_file);
             }
             finally
             {
                 File.Delete(temporary_file);
             }
         }
+    }
+
+    public class RemoteModelException : Exception
+    {
+        public Uri RemoteAddr { get; set; }
+        public string RemoteFile { get; set; }
     }
 }

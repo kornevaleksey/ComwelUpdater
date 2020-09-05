@@ -5,8 +5,12 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Net;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Drawing;
+using SharpCompress.Common;
+using SharpCompress.Writers;
+using SharpCompress.Readers;
 
 namespace Updater
 {
@@ -18,7 +22,7 @@ namespace Updater
 
         public Uri RemoteAddr { get=>httpClient.BaseAddress; set=>httpClient.BaseAddress = value; }
 
-        public event EventHandler<UpdaterProgressEventArgs> ProgressUpdate;
+        public event EventHandler<LoaderProgressEventArgs> LoaderProgress;
 
         private readonly int download_tries;
 
@@ -50,108 +54,41 @@ namespace Updater
             }
         }
 
-        public async Task<bool> DownloadFile (string remoteRelativePath, string localFileName, long offset = 0, long maxsize = 0)
+        public async Task DownloadFile (string remoteRelativePath, string localFileName)
         {
             UriBuilder uriBuilder = new UriBuilder(RemoteAddr)
             {
-                Path = remoteRelativePath
+                Path = remoteRelativePath + ".zip"
             };
 
-            /*
-            //Copy old file to temporary location
-            string temporaryOldFile = String.Empty;
-            if (File.Exists(localFileName))
-            {
-                logger.Info("Copy old file to temporary: " + temporaryOldFile);
-                temporaryOldFile = Path.GetTempFileName();
-                File.Copy(localFileName, temporaryOldFile, true);
-            } else
-            {
-                if (Directory.Exists(new FileInfo(localFileName).Directory.FullName)==false)
-                {
-                    Directory.CreateDirectory(new FileInfo(localFileName).Directory.FullName);
-                }
-            }*/
+            logger.Info("Download file {0} into local file {1}", uriBuilder.ToString(), localFileName);
+
 
             if (Directory.Exists(new FileInfo(localFileName).Directory.FullName) == false)
             {
+                logger.Info("Creating directory {0}", new FileInfo(localFileName).Directory.FullName);
                 Directory.CreateDirectory(new FileInfo(localFileName).Directory.FullName);
             }
 
-            WebClient webclient = new WebClient();
-            DateTime start_dl = DateTime.Now;
-
-            webclient.DownloadProgressChanged += (object sender, DownloadProgressChangedEventArgs e) => 
+            using var streamresp = httpClient.GetStreamAsync(uriBuilder.Uri);
+            using (var zipreader = ReaderFactory.Open(await streamresp))
             {
-                if (maxsize > 0)
-                {
-                    double dl_speed = e.BytesReceived / (DateTime.Now - start_dl).TotalSeconds;
-                    double time2finish = (maxsize - offset - e.BytesReceived) / dl_speed;
-                    ProgressUpdate?.Invoke(this, new UpdaterProgressEventArgs()
-                    {
-                        ProgressMax = maxsize,
-                        ProgressValue = offset + e.BytesReceived,
-                        InfoStr = String.Format("Скачиваю файл {0}, \n скорость {1:F2} КБ/с \n Оставшееся время скачивания {2:F2} минут", remoteRelativePath, dl_speed/1024, time2finish/60),
-                        InfoStrColor = Color.Black
-                    });
-                } else
-                {
-                    ProgressUpdate?.Invoke(this, new UpdaterProgressEventArgs()
-                    {
-                        ProgressMax = 100,
-                        ProgressValue = e.ProgressPercentage,
-                        InfoStr = String.Format("Скачиваю файл {0}", remoteRelativePath),
-                        InfoStrColor = Color.Black
-                    });
-                }
-            };
+                zipreader.MoveToNextEntry();
+                await Task.Run(() => zipreader.WriteEntryToFile(localFileName, new ExtractionOptions() { Overwrite = true }));
 
-            try
-            {
-                await webclient.DownloadFileTaskAsync(uriBuilder.Uri, localFileName);
-                return true;
+                logger.Info("File loaded");
             }
-            catch (WebException webex)
-            {
-                logger.Error(webex, "File {0} download to {1} failed!", uriBuilder.Uri.ToString(), localFileName);
-                return false;
-            }
-
-            /*
-            try
-            {
-                HttpResponseMessage response = await httpClient.GetAsync(uriBuilder.ToString());
-
-                if (response.IsSuccessStatusCode)
-                {
-                    using (FileStream downloadfilestream = new FileStream(localFileName, FileMode.OpenOrCreate))
-                    {
-                        await response.Content.CopyToAsync(downloadfilestream);
-                    }
-                    logger.Info(String.Format("Success download to client remote storage on {0}", uriBuilder.ToString()));
-                }
-                else
-                {
-                    throw new FileNotFoundException();
-                }
-
-                return true;
-            }
-            catch (HttpRequestException e)
-            {
-                logger.Error(e, "File download failed!");
-                logger.Info("Copy old file back");
-                return false;
-            }
-            */
         }
 
-        public async Task<List<ClientFileInfo>> DownloadClientFiles (string remoteRelativePath, string LocalPath, List<ClientFileInfo> FilesList)
+        public async Task DownloadClientFiles (string remoteRelativePath, string LocalPath, List<ClientFileInfo> FilesList)
         {
+            logger.Info("Start download client {0} files", FilesList.Count);
+
             List<ClientFileInfo> failed_loads = new List<ClientFileInfo>();
             FileChecker checker = new FileChecker();
             long filessize = FilesList.Sum(ci => ci.FileSize);
             long downloadsize=0;
+            double downloadspeed = 0;
 
             foreach (ClientFileInfo clientFileInfo in FilesList)
             {
@@ -160,22 +97,25 @@ namespace Updater
                 string local_filename = LocalPath + "\\" + clientFileInfo.FileName;
                 while ((tries<download_tries)&&(file_ok==false))
                 {
-                    /*
-                    ProgressUpdate?.Invoke(this, new UpdaterProgressEventArgs()
-                    {
-                        ProgressMax = filessize,
-                        ProgressValue = downloadsize,
-                        InfoStr = String.Format("Скачиваю файл {0}", clientFileInfo.FileName),
-                        InfoStrColor = Color.Black
-                    });
-                    */
-
                     string remote_uri = remoteRelativePath + clientFileInfo.FileName;
-                    bool file_loaded = await DownloadFile(remote_uri, local_filename, downloadsize, filessize);
-                    if (file_loaded)
+
+                    LoaderProgress?.Invoke(this, new LoaderProgressEventArgs()
                     {
+                        Percentage = (double)downloadsize / filessize,
+                        FileName = clientFileInfo.FileName,
+                        DownloadTry = tries,
+                        Speed = downloadspeed
+                    }) ;
+
+                    try
+                    {
+                        DateTime starttime = DateTime.Now;
+                        await DownloadFile(remote_uri, local_filename);
+                        TimeSpan timeSpan = DateTime.Now - starttime;
                         FileInfo loaded_info = new FileInfo(local_filename);
-                        if (loaded_info.Length==clientFileInfo.FileSize)
+                        downloadspeed = loaded_info.Length / timeSpan.TotalSeconds;
+
+                        if (loaded_info.Length == clientFileInfo.FileSize)
                         {
                             ClientFileInfo loaded_file_info = await checker.GetFileInfo(local_filename, true);
                             if (clientFileInfo.Hash.SequenceEqual(loaded_file_info.Hash))
@@ -184,6 +124,11 @@ namespace Updater
                             }
                         }
                     }
+                    finally
+                    {
+
+                    }
+
                     tries++;
                 }
 
@@ -196,13 +141,24 @@ namespace Updater
                 }
             }
 
-            return failed_loads;
+            if (failed_loads.Count > 0)
+                throw new LoaderFilesLoadException()
+                {
+                    Files = failed_loads
+                };
         }
     }
 
-    public class RemoteModelException : Exception
+    public class LoaderProgressEventArgs : EventArgs
     {
-        public Uri RemoteAddr { get; set; }
-        public string RemoteFile { get; set; }
+        public string FileName;
+        public int DownloadTry;
+        public double Percentage;
+        public double Speed;
+    }
+
+    public class LoaderFilesLoadException : Exception
+    {
+        public List<ClientFileInfo> Files { get; set; }
     }
 }

@@ -6,11 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AsyncEnumerator" Version="4.0.2" />
     <PackageReference Include="NLog" Version="4.7.4" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Config\Config.csproj" />
+    <PackageReference Include="SharpCompress" Version="0.26.0" />
   </ItemGroup>
 
 </Project>
