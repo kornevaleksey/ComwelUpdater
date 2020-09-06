@@ -92,9 +92,16 @@ namespace Updater
         {
             logger.Info("Read client model from file {0}", filename);
 
-            if (File.Exists(filename) == false) throw new FileNotFoundException("File not found", filename);
-            string deserial = await File.ReadAllTextAsync(filename);
-            ClientInfo = JsonSerializer.Deserialize<ClientModel>(deserial);
+            try
+            {
+                string deserial = await File.ReadAllTextAsync(filename);
+                ClientInfo = JsonSerializer.Deserialize<ClientModel>(deserial);
+            } 
+            catch (FileNotFoundException)
+            {
+
+            }
+
 
             logger.Info(String.Format("Finish read client model from file {0}", filename));
         }
