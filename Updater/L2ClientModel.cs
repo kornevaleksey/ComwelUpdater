@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using System.Linq;
 using System.Drawing;
+using System.Threading;
 
 namespace Updater
 {
@@ -106,7 +107,7 @@ namespace Updater
         {
         }
 
-        public async Task CreateModelFromDirectory (Uri localDir)
+        public async Task CreateModelFromDirectory (Uri localDir, CancellationToken token)
         {
             List<string> filenames_local;
             if (Directory.Exists(localDir.LocalPath) == true)
@@ -122,11 +123,11 @@ namespace Updater
                 FilesInfo = new List<ClientFileInfo>()
             };
 
-            ClientInfo.FilesInfo = await Checker.GetFilesListInfo(filenames_local, localDir.LocalPath);
+            ClientInfo.FilesInfo = await Checker.GetFilesListInfo(filenames_local, localDir.LocalPath, token);
             ClientInfo.ClientSize += ClientInfo.FilesInfo.Sum( ci => ci.FileSize);
         }
 
-        public async Task CreateModelFromDirectory(Uri localDir, bool complete = false)
+        public async Task CreateModelFromDirectory(Uri localDir, CancellationToken token, bool complete = false)
         {
             List<string> filenames_local;
             if (Directory.Exists(localDir.LocalPath) == true)
@@ -142,7 +143,7 @@ namespace Updater
                 FilesInfo = new List<ClientFileInfo>()
             };
 
-            ClientInfo.FilesInfo = await Checker.GetFilesListInfo(filenames_local, localDir.LocalPath, complete);
+            ClientInfo.FilesInfo = await Checker.GetFilesListInfo(filenames_local, localDir.LocalPath, token, complete);
             ClientInfo.ClientSize += ClientInfo.FilesInfo.Sum(ci => ci.FileSize);
         }
 

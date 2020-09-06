@@ -11,6 +11,8 @@ using System.Drawing;
 using SharpCompress.Common;
 using SharpCompress.Writers;
 using SharpCompress.Readers;
+using System.Net.NetworkInformation;
+using System.Threading;
 
 namespace Updater
 {
@@ -20,9 +22,10 @@ namespace Updater
 
         public static HttpClient httpClient;
 
-        public Uri RemoteAddr { get=>httpClient.BaseAddress; set=>httpClient.BaseAddress = value; }
+        public Uri RemoteAddr { get; set; }// { get=>httpClient.BaseAddress; set=>httpClient.BaseAddress = value; }
 
         public event EventHandler<LoaderProgressEventArgs> LoaderProgress;
+        public event EventHandler<LoaderConnectionCheckEventArgs> ConnectionCheck;
 
         private readonly int download_tries;
 
@@ -37,20 +40,28 @@ namespace Updater
             //httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        public async Task<bool> CheckConnect()
+        public async void CheckConnect()
         {
             try
             {
                 HttpResponseMessage response = await httpClient.GetAsync(RemoteAddr.ToString());
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
+                ConnectionCheck?.Invoke(this, new LoaderConnectionCheckEventArgs()
+                {
+                    RemoteAddr = this.RemoteAddr,
+                    CheckException = null
+                });
                 logger.Info(String.Format("Success connection to client remote storage on {0}", RemoteAddr.ToString()));
-                return true;
             }
-            catch (HttpRequestException e)
+            catch (Exception e)
             {
                 logger.Error(e, "Connection check failed!");
-                return false;
+                ConnectionCheck?.Invoke(this, new LoaderConnectionCheckEventArgs()
+                {
+                    RemoteAddr = this.RemoteAddr,
+                    CheckException = e
+                });
             }
         }
 
@@ -80,7 +91,7 @@ namespace Updater
             }
         }
 
-        public async Task DownloadClientFiles (string remoteRelativePath, string LocalPath, List<ClientFileInfo> FilesList)
+        public async Task DownloadClientFiles (string remoteRelativePath, string LocalPath, List<ClientFileInfo> FilesList, CancellationToken token)
         {
             logger.Info("Start download client {0} files", FilesList.Count);
 
@@ -92,6 +103,9 @@ namespace Updater
 
             foreach (ClientFileInfo clientFileInfo in FilesList)
             {
+                if (token.IsCancellationRequested)
+                    return;
+
                 int tries = 0;
                 bool file_ok = false;
                 string local_filename = LocalPath + "\\" + clientFileInfo.FileName;
@@ -155,6 +169,12 @@ namespace Updater
         public int DownloadTry;
         public double Percentage;
         public double Speed;
+    }
+
+    public class LoaderConnectionCheckEventArgs : EventArgs
+    {
+        public Uri RemoteAddr;
+        public Exception CheckException;
     }
 
     public class LoaderFilesLoadException : Exception

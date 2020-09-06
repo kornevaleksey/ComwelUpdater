@@ -70,7 +70,7 @@ namespace Updater
 
                 try
                 {
-                    await localClient.CreateModelFromDirectory(config.ConfigFields.ClientFolder);
+                    await localClient.CreateModelFromDirectory(config.ConfigFields.ClientFolder, new CancellationTokenSource().Token);
                     ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Собрана сокращённая информация о файлах игры" });
                 }
                 catch (FileNotFoundException fnfex)
@@ -127,7 +127,7 @@ namespace Updater
 
                 try
                 {
-                    await localClient.CreateModelFromDirectory(config.ConfigFields.ClientFolder, true);
+                    await localClient.CreateModelFromDirectory(config.ConfigFields.ClientFolder, token, true);
                     await localClient.WriteClientModel(config.LocalInfoFile);
                     ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Собрана полная информация о файлах игры" });
                 }
@@ -150,7 +150,7 @@ namespace Updater
             }
         }
 
-        public async Task UpdateClient()
+        public async void UpdateClient(CancellationToken token)
         {
             if (IsBusy==false)
             {
@@ -159,7 +159,7 @@ namespace Updater
 
                 try
                 {
-                    await loader.DownloadClientFiles(config.RemoteClientPath, config.ConfigFields.ClientFolder.LocalPath, Difference);
+                    await loader.DownloadClientFiles(config.RemoteClientPath, config.ConfigFields.ClientFolder.LocalPath, Difference, token);
                     await remoteClient.WriteClientModel(config.LocalInfoFile);
                 }
                 finally
@@ -183,7 +183,7 @@ namespace Updater
 
             foreach (ClientFileInfo fileinfo in remote.ClientInfo.FilesInfo)
             {
-                ClientFileInfo cachedinfo = shadow.ClientInfo.FilesInfo.Find(m => m.FileName.Equals(fileinfo.FileName));
+                ClientFileInfo cachedinfo = shadow.ClientInfo?.FilesInfo.Find(m => m.FileName.Equals(fileinfo.FileName));
                 if ((cachedinfo == null) || (cachedinfo != fileinfo))
                 {
                     difference.Add(fileinfo);

@@ -60,6 +60,7 @@
     <PackageReference Include="Microsoft.NETCore.Targets" Version="3.1.0" />
     <PackageReference Include="NLog" Version="4.7.4" />
     <PackageReference Include="NLog.Extensions.Logging" Version="1.6.5" />
+    <PackageReference Include="Ookii.Dialogs.Wpf.NETCore" Version="2.1.0" />
     <PackageReference Include="WindowsAPICodePack-Core" Version="1.1.2" />
   </ItemGroup>
 

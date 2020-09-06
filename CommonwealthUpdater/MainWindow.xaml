@@ -137,11 +137,12 @@
                                     </TextBox.Resources>
                                 </TextBox>
                             </DockPanel>
+                            <Ellipse x:Name="RemoteOK" Grid.Row="0" Grid.Column="3" Width="10" Height="10" Fill="Gray" Margin="0,25,0,0"/>
                             <DockPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" HorizontalAlignment="Stretch">
                                 <DockPanel DockPanel.Dock="Top" VerticalAlignment="Center">
                                     <Label DockPanel.Dock="Left" VerticalAlignment="Center" Grid.Column="0" Grid.ColumnSpan="6" Grid.Row="3" FontSize="14" FontWeight="Medium">Расположение клиента Lineage II:</Label>
                                 </DockPanel>
-                                <TextBox x:Name="ClientDestination" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Tag="ClientFolder" Margin="5" Background="#ffe038" IsReadOnly="True" VerticalContentAlignment="Center" FontSize="14">
+                                <TextBox x:Name="ClientDestination" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Tag="ClientFolder" Margin="5" Background="#ffe038" IsReadOnly="True" VerticalContentAlignment="Center" FontSize="14" TextChanged="ClientDestination_TextChanged">
                                     <TextBox.Resources>
                                         <Style TargetType="{x:Type Border}">
                                             <Setter Property="CornerRadius" Value="5"/>
@@ -149,6 +150,7 @@
                                     </TextBox.Resources>
                                 </TextBox>
                             </DockPanel>
+                            <Ellipse x:Name="DestinationOK" Grid.Row="1" Grid.Column="3" Width="10" Height="10" Fill="Gray" Margin="0,25,0,0"/>
                             <Button x:Name="BtnSelect" Grid.Row="2" Grid.Column="1" VerticalAlignment="Stretch" Margin="5,10,5,10" Background="#736356" Click="BtnSelect_Click">
                                 <Button.Resources>
                                     <Style TargetType="{x:Type Border}">
@@ -157,14 +159,9 @@
                                 </Button.Resources>
                                 <TextBlock Foreground="White" FontSize="14" Margin="5" VerticalAlignment="Center"><Run Text="Выбрать"/></TextBlock>
                             </Button>
-                            <Button x:Name="BtnSettingsWrite" Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="1" Background="White" Margin="0,0,0,20" Click="BtnSettingsWrite_Click" BorderBrush="#736356" BorderThickness="2">
-                                <Button.Resources>
-                                    <Style TargetType="{x:Type Border}">
-                                        <Setter Property="CornerRadius" Value="5"/>
-                                    </Style>
-                                </Button.Resources>
-                                <TextBlock FontSize="14" Foreground="#736356"><Run Text="Сохранить"/></TextBlock>
-                            </Button>
+                            <CheckBox x:Name="ChkGameFolder" Grid.Row="2" Grid.Column="2" Content="В папке с игрой" VerticalAlignment="Center" FontSize="14" FontWeight="Medium" Margin="5" IsChecked="False" Unchecked="ChkGameFolder_Unchecked" Checked="ChkGameFolder_Checked">
+                            </CheckBox>
+                            <TextBlock x:Name="TxtBSaveSettings" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="" FontSize="14" FontWeight="Medium" VerticalAlignment="Center" />
                         </Grid>
                     </TabItem.Content>
                 </TabItem>

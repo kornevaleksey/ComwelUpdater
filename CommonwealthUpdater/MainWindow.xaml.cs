@@ -9,11 +9,13 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using Microsoft.WindowsAPICodePack.Dialogs;
 using Config;
 using Updater;
+using Launcher;
 using System.Diagnostics;
 using System.Net.Http;
+using Ookii.Dialogs.Wpf;
+using System.Net.NetworkInformation;
 
 namespace CommonwealthUpdater
 {
@@ -25,10 +27,9 @@ namespace CommonwealthUpdater
         private static NLog.Logger logger;// = NLog.LogManager.GetCurrentClassLogger();
 
         static L2UpdaterConfig UpdaterConfig;
-        readonly Loader loader;
-        L2Updater updater;
 
-        Task UpdaterTask;
+        CancellationTokenSource updaterCancellationTokenSource;
+        CancellationTokenSource fullcheckCancellationTokenSource;
 
         public MainWindow()
         {
@@ -37,25 +38,50 @@ namespace CommonwealthUpdater
             
             UpdaterConfig = new L2UpdaterConfig();
 
-            loader = new Loader();
-
-            updater = new L2Updater(loader, UpdaterConfig);
-
             InitializeComponent();
+
+            UpdaterConfig.ConfigFinishedRead += ConfigFinishedRead;
+            UpdaterConfig.ConfigReadError += ConfigReadError;
+            UpdaterConfig.Read();
         }
 
-        private async void updaterwindow_Initialized(object sender, EventArgs e)
+        private void updaterwindow_Initialized(object sender, EventArgs e)
         {
             logger.Info("Start init updater");
-            await UpdaterConfig.Read();
-            loader.RemoteAddr = UpdaterConfig.ConfigFields.DownloadAddress;
-            UpdaterSelect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            
         }
 
         private void MainGrid_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (Mouse.LeftButton == MouseButtonState.Pressed)
                 this.DragMove();
+        }
+
+        private void ConfigFinishedRead (object sender, EventArgs args)
+        {
+            ChkGameFolder.IsChecked = UpdaterConfig.ConfigFields.PlacedInClientFolder;
+            ClientDestination.Text = UpdaterConfig.ConfigFields.ClientFolder.LocalPath;
+            RemoteAddr.Text = UpdaterConfig.ConfigFields.DownloadAddress.ToString();
+
+            UpdaterSelect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        }
+
+        private void ConfigReadError(object sender, ConfigRWErrorEventArgs args)
+        {
+            switch (args.ReadException)
+            {
+                case ArgumentNullException nullex:
+                    LauncherDialogs.MessageBox(String.Format("Нет конфигурации программы! Введите настройки."));
+                    break;
+                default:
+                    //LauncherDialogs.MessageBox(String.Format("Ошибка чтения файла конфигурации! {0}", args.ReadException.Message));
+                    break;
+            }
+
+            UpdaterSelect.IsEnabled = false;
+            RecheckBtn.IsEnabled = false;
+
+            SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         }
 
         #region Selection DockPanel events
@@ -74,24 +100,26 @@ namespace CommonwealthUpdater
         {
             MainSelector.SelectedIndex = 0;
 
-            if (updater.IsBusy == false)
+            Loader loader = new Loader();
+            L2Updater updater = new L2Updater(loader, UpdaterConfig);
+            ((Button)sender).Tag = updater;
+
+            updater.ClientCheckUpdate += ClientCheckUpdate;
+            updater.ClientCheckFinished += ClientCheckFinish;
+            loader.LoaderProgress += ClientLoadUpdate;
+            loader.RemoteAddr = UpdaterConfig.ConfigFields.DownloadAddress;
+
+            InfoBlock.Text = "Проверка клиента игры Lineage II";
+
+            try
             {
-
-                updater.ClientCheckUpdate += ClientCheckUpdate;
-                updater.ClientCheckFinished += ClientCheckFinish;
-                loader.LoaderProgress += ClientLoadUpdate;
-
-                InfoBlock.Text = "Проверка клиента игры Lineage II";
-
-                try
-                {
-                    updater.FastLocalClientCheck();
-                }
-                finally
-                {
-                }
+                updater.FastLocalClientCheck();
+            }
+            finally
+            {
             }
 
+            
             if (File.Exists(UpdaterConfig.ClientExeFile))
             {
                 PlayL2.IsEnabled = true;
@@ -100,8 +128,9 @@ namespace CommonwealthUpdater
 
         private void Settings_Click(object sender, RoutedEventArgs e)
         {
-            RemoteAddr.Text = UpdaterConfig.ConfigFields.DownloadAddress?.Host+":"+ UpdaterConfig.ConfigFields.DownloadAddress?.Port.ToString();
-            ClientDestination.Text = UpdaterConfig.ConfigFields.ClientFolder?.ToString();
+            ChkGameFolder.IsChecked = UpdaterConfig.ConfigFields.PlacedInClientFolder;
+            RemoteAddr.Text = UpdaterConfig.ConfigFields.DownloadAddress==null?"": UpdaterConfig.ConfigFields.DownloadAddress.ToString();
+            ClientDestination.Text = UpdaterConfig.ConfigFields.ClientFolder==null?"": UpdaterConfig.ConfigFields.ClientFolder.LocalPath;
 
             MainSelector.SelectedIndex = 1;
         }
@@ -114,48 +143,138 @@ namespace CommonwealthUpdater
         #endregion
 
         #region Settings tab events 
-        private void BtnSelect_Click(object sender, RoutedEventArgs e)
-        {
-            CommonOpenFileDialog commonOpenFileDialog = new CommonOpenFileDialog()
-            {
-                IsFolderPicker = true,
-                InitialDirectory = UpdaterConfig.ConfigFields.ClientFolder?.ToString()
-            };
 
-            if (commonOpenFileDialog.ShowDialog() == CommonFileDialogResult.Ok)
+        private void ConfigFinishedWrite (object sender, EventArgs args)
+        {
+            UpdaterSelect.IsEnabled = true;
+            RecheckBtn.IsEnabled = true;
+
+            if (UpdaterConfig.ConfigFields.PlacedInClientFolder==false)
             {
-                UpdaterConfig.ConfigFields.ClientFolder = new Uri(commonOpenFileDialog.FileName);
-                ClientDestination.Text = commonOpenFileDialog.FileName;
+                var cfg = new L2UpdaterConfig();
+                cfg.ConfigFields.PlacedInClientFolder = true;
+                if (File.Exists(cfg.ConfigFile))
+                    File.Delete(cfg.ConfigFile);
             }
+
+            TxtBSaveSettings.Text = "Настройки сохранены";
+            TxtBSaveSettings.Foreground = Brushes.Green;
         }
 
-        private void RemoteAddrChanged(object sender, TextChangedEventArgs e)
+        private void ConfigWriteError(object sender, ConfigRWErrorEventArgs args)
         {
+            TxtBSaveSettings.Text = "Не получилось сохранить настройки!";
+            TxtBSaveSettings.Foreground = Brushes.Red;
         }
 
-        private async void BtnSettingsWrite_Click(object sender, RoutedEventArgs e)
+        private void SettingsSave()
         {
-            if ((RemoteAddr.Text != "") && (ClientDestination.Text != ""))
+            if ((Uri.IsWellFormedUriString(RemoteAddr.Text, UriKind.Absolute)) && Directory.Exists(ClientDestination.Text))
             {
-                UriBuilder remote = new UriBuilder()
-                {
-                    Host = RemoteAddr.Text.Split(":")[0],
-                    Port = Convert.ToInt32(RemoteAddr.Text.Split(":")[1])
-                };
-                UpdaterConfig.ConfigFields.DownloadAddress = remote.Uri;
+                TxtBSaveSettings.Text = "Сохраняю настройки";
+
+                UpdaterConfig.ConfigFinishedWrite = ConfigFinishedWrite;
+                UpdaterConfig.ConfigWriteError = ConfigWriteError;
+
+                UpdaterConfig.ConfigFields.DownloadAddress = new Uri(RemoteAddr.Text);
                 UpdaterConfig.ConfigFields.ClientFolder = new Uri(ClientDestination.Text);
-                await UpdaterConfig.Write();
+                UpdaterConfig.ConfigFields.PlacedInClientFolder = ChkGameFolder.IsChecked ?? false;
+                UpdaterConfig.Write();
             } else
             {
-                MessageBox.Show("Не указано одно из значений!");
+                TxtBSaveSettings.Text = "Не могу сохранить настройки - неверные данные!";
+                TxtBSaveSettings.Foreground = Brushes.Red;
+            }
+
+        }
+
+        private void ChkGameFolder_Checked(object sender, RoutedEventArgs e)
+        {
+            BtnSelect.IsEnabled = false;
+            UpdaterConfig.ConfigFields.PlacedInClientFolder = true;
+            ClientDestination.Text = UpdaterConfig.ConfigFields.ClientFolder.LocalPath;
+            SettingsSave();
+        }
+
+        private void ChkGameFolder_Unchecked(object sender, RoutedEventArgs e)
+        {
+            BtnSelect.IsEnabled = true;
+            UpdaterConfig.ConfigFields.PlacedInClientFolder = false;
+            ClientDestination.Text = UpdaterConfig.ConfigFields.ClientFolder.LocalPath;
+            SettingsSave();
+        }
+
+        private void BtnSelect_Click(object sender, RoutedEventArgs e)
+        {
+            VistaFolderBrowserDialog folderdialog = new VistaFolderBrowserDialog()
+            {
+                SelectedPath = UpdaterConfig.ConfigFields.ClientFolder==null?"": Path.GetFullPath ( UpdaterConfig.ConfigFields.ClientFolder.LocalPath)+"\\",
+                ShowNewFolderButton = true
+            };
+
+            if (folderdialog.ShowDialog(this) == true)
+            {
+                UpdaterConfig.ConfigFields.ClientFolder = new Uri(folderdialog.SelectedPath);
+                ClientDestination.Text = folderdialog.SelectedPath;
             }
         }
+
+        private void RemoteAddrChecked (object sender, LoaderConnectionCheckEventArgs args)
+        {
+            if (args.CheckException==null)
+            {
+                RemoteOK.Fill = Brushes.Green;
+            } else
+            {
+                RemoteAddr.ToolTip = new TextBlock() { Text = "Не могу соединиться с сервером" };
+            }
+        }
+        
+        private void RemoteAddrChanged(object sender, TextChangedEventArgs e)
+        {
+            SettingsSave();
+            TextBox remoteaddr = (TextBox)sender;
+            if (Uri.IsWellFormedUriString(remoteaddr.Text, UriKind.Absolute))
+            {
+                remoteaddr.ToolTip = null;
+                RemoteOK.Fill = Brushes.Orange;
+                Loader lr = new Loader()
+                {
+                    RemoteAddr = new Uri(remoteaddr.Text)
+                };
+                lr.ConnectionCheck += RemoteAddrChecked;
+
+                lr.CheckConnect();
+            } else
+            {
+                RemoteOK.Fill = Brushes.Red;
+                remoteaddr.ToolTip = new TextBlock() { Text = "Неверный формат адреса!" };
+            }
+        }
+
+        private void ClientDestination_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            TextBox dest = (TextBox)sender;
+            if (Directory.Exists(dest.Text))
+            {
+                DestinationOK.Fill = Brushes.Green;
+                dest.ToolTip = null;
+                SettingsSave();
+            } else
+            {
+                DestinationOK.Fill = Brushes.Red;
+                dest.ToolTip = new TextBlock() { Text = "Указанного расположения не существует!" };
+            }
+        }
+
         #endregion
 
         #region Updater tab events
 
         private void ClientCheckFinish (object sender, ClientCheckFinishEventArgs args)
         {
+            L2Updater updater = (L2Updater)sender;
+
             Dispatcher.BeginInvoke((Action)delegate ()
             {
                 updatepercentage.Maximum = 0;
@@ -174,10 +293,6 @@ namespace CommonwealthUpdater
                         updater.Difference.Sum(s => s.FileSize) / 1024 / 1024)
                     };
                 }
-
-                updater.ClientCheckUpdate -= ClientCheckUpdate;
-                updater.ClientCheckFinished -= ClientCheckFinish;
-                loader.LoaderProgress -= ClientLoadUpdate;
             });
         }
 
@@ -205,16 +320,21 @@ namespace CommonwealthUpdater
 
         private void ClientUpdateFinished (object sender, EventArgs args)
         {
-            Dispatcher.BeginInvoke((Action)delegate ()
-            {
-                UpdateL2.IsEnabled = false;
-                PlayL2.IsEnabled = updater.ClientCanRun;
+            L2Updater updater = (L2Updater)sender;
 
-                updatepercentage.Maximum = 100;
-                updatepercentage.Value = 100;
-                InfoBlock.Text = String.Format("Игра обновлена");
-                InfoBlock.Foreground = Brushes.Green;
+            UpdateL2.IsEnabled = false;
+            PlayL2.IsEnabled = updater.ClientCanRun;
+
+            updatepercentage.Maximum = 100;
+            updatepercentage.Value = 100;
+            InfoBlock.Text = String.Format("Игра обновлена");
+            InfoBlock.Foreground = Brushes.Green;
+
+/*            Dispatcher.BeginInvoke((Action)delegate ()
+            {
+
             });
+*/
         }
 
         private void PlayL2_Click(object sender, RoutedEventArgs e)
@@ -228,10 +348,16 @@ namespace CommonwealthUpdater
 
         private void UpdateL2_Click(object sender, RoutedEventArgs e)
         {
+            L2Updater updater = (L2Updater)((Button)sender).Tag;
+
             if (BtnUpdateL2Text.Text.Equals("Обновить"))
             {
                 UpdateL2.Tag = false;
                 BtnUpdateL2Text.Text = "Остановить";
+
+                updaterCancellationTokenSource = new CancellationTokenSource();
+
+                Loader loader = new Loader();
 
                 loader.LoaderProgress += ClientLoadUpdate;
                 updater.ClientUpdateFinished += ClientUpdateFinished;
@@ -239,7 +365,7 @@ namespace CommonwealthUpdater
                 try
                 {
                     PlayL2.IsEnabled = false;
-                    UpdaterTask = updater.UpdateClient();
+                    updater.UpdateClient(updaterCancellationTokenSource.Token);
                 }
                 finally
                 {
@@ -247,9 +373,8 @@ namespace CommonwealthUpdater
 
             } else
             {
+                updaterCancellationTokenSource.Cancel();
                 BtnUpdateL2Text.Text = "Обновить";
-                Task.
-                UpdaterTask.stop
             }
         }
 
@@ -276,17 +401,21 @@ namespace CommonwealthUpdater
             });
         }
 
-        private async void BtnFullCheck_Click(object sender, RoutedEventArgs e)
+        private void BtnFullCheck_Click(object sender, RoutedEventArgs e)
         {
             BtnFullCheck.IsEnabled = false;
 
-            updater = new L2Updater(loader, UpdaterConfig);
+            Loader loader = new Loader
+            {
+                RemoteAddr = UpdaterConfig.ConfigFields.DownloadAddress
+            };
+            L2Updater updater = new L2Updater(loader, UpdaterConfig);
             updater.ClientCheckUpdate += FullCheckActionProgress;
             loader.LoaderProgress += FullCheckLoaderProgress;
 
             try
             {
-                await updater.FullLocalClientCheck();
+                //await updater.FullLocalClientCheck();
             }
             catch (RemoteModelException exr)
             {
@@ -323,6 +452,9 @@ namespace CommonwealthUpdater
 
             BtnFullCheck.IsEnabled = true;
         }
+
+
+
 
         #endregion
     }

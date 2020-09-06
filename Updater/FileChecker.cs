@@ -48,7 +48,7 @@ namespace Updater
             return clientFileInfo;
         }
 
-        public async Task<List<ClientFileInfo>> GetFilesListInfo (List<string> filenames, string localpath, bool complete = false)
+        public async Task<List<ClientFileInfo>> GetFilesListInfo (List<string> filenames, string localpath, CancellationToken token, bool complete = false)
         {
             List<ClientFileInfo> res = new List<ClientFileInfo>();
 
@@ -56,6 +56,9 @@ namespace Updater
 
             foreach (string filename in filenames)
             {
+                if (token.IsCancellationRequested)
+                    return res;
+
                 FileCheckerProgress?.Invoke(this, new FileCheckerProgressEventArgs()
                 {
                     FilesCount = filenames.Count,
