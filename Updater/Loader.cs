@@ -25,6 +25,7 @@ namespace Updater
         public Uri RemoteAddr { get; set; }// { get=>httpClient.BaseAddress; set=>httpClient.BaseAddress = value; }
 
         public event EventHandler<LoaderProgressEventArgs> LoaderProgress;
+        public event EventHandler<LoaderUnZipProgressEventArgs> UnZipProgress;
         public event EventHandler<LoaderConnectionCheckEventArgs> ConnectionCheck;
 
         private readonly int download_tries;
@@ -65,12 +66,29 @@ namespace Updater
             }
         }
 
-        public async Task DownloadFile (string remoteRelativePath, string localFileName)
+        private string loadfilename;
+        private CancellationToken token;
+        private Stream stream;
+
+        public void ExtractionProgress (object sender, ReaderExtractionEventArgs<IEntry> args)
+        {
+            if (token.IsCancellationRequested)
+                stream.Close();
+            else
+                UnZipProgress?.Invoke(this, new LoaderUnZipProgressEventArgs()
+                {
+                    Percentage = args.ReaderProgress.PercentageReadExact,
+                    FileName = loadfilename,
+                });
+        }
+
+        public async Task DownloadFile (string remoteRelativePath, string localFileName, CancellationToken token)
         {
             UriBuilder uriBuilder = new UriBuilder(RemoteAddr)
             {
                 Path = remoteRelativePath + ".zip"
             };
+            loadfilename = uriBuilder.Uri.ToString();
 
             logger.Info("Download file {0} into local file {1}", uriBuilder.ToString(), localFileName);
 
@@ -81,11 +99,23 @@ namespace Updater
                 Directory.CreateDirectory(new FileInfo(localFileName).Directory.FullName);
             }
 
+            using var streamlocalfile = File.Create(localFileName);
             using var streamresp = httpClient.GetStreamAsync(uriBuilder.Uri);
             using (var zipreader = ReaderFactory.Open(await streamresp))
             {
+                stream = streamlocalfile;
+                this.token = token;
+
+                zipreader.EntryExtractionProgress += ExtractionProgress;
                 zipreader.MoveToNextEntry();
-                await Task.Run(() => zipreader.WriteEntryToFile(localFileName, new ExtractionOptions() { Overwrite = true }));
+                await Task.Run ( ()  => zipreader.WriteEntryTo(streamlocalfile), token);
+
+                /*
+                if (token.IsCancellationRequested)
+                {
+                    streamlocalfile.Close();
+                }
+                */
 
                 logger.Info("File loaded");
             }
@@ -119,12 +149,12 @@ namespace Updater
                         FileName = clientFileInfo.FileName,
                         DownloadTry = tries,
                         Speed = downloadspeed
-                    }) ;
+                    });
 
                     try
                     {
                         DateTime starttime = DateTime.Now;
-                        await DownloadFile(remote_uri, local_filename);
+                        await DownloadFile(remote_uri, local_filename, token);
                         TimeSpan timeSpan = DateTime.Now - starttime;
                         FileInfo loaded_info = new FileInfo(local_filename);
                         downloadspeed = loaded_info.Length / timeSpan.TotalSeconds;
@@ -134,6 +164,7 @@ namespace Updater
                             ClientFileInfo loaded_file_info = await checker.GetFileInfo(local_filename, true);
                             if (clientFileInfo.Hash.SequenceEqual(loaded_file_info.Hash))
                             {
+                                //new FileInfo(local_filename).LastWriteTimeUtc = clientFileInfo.Changed;
                                 file_ok = true;
                             }
                         }
@@ -169,6 +200,12 @@ namespace Updater
         public int DownloadTry;
         public double Percentage;
         public double Speed;
+    }
+
+    public class LoaderUnZipProgressEventArgs : EventArgs
+    {
+        public string FileName;
+        public double Percentage;
     }
 
     public class LoaderConnectionCheckEventArgs : EventArgs

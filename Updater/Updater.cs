@@ -40,141 +40,142 @@ namespace Updater
 
         public async void FastLocalClientCheck()
         {
-            if (IsBusy == false)
+            logger.Info("Start fast local client check");
+            IsBusy = true;
+            ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr="Быстрая проверка файлов игры" });
+
+            cacheClient = new L2ClientLocal();
+            localClient = new L2ClientLocal();
+            remoteClient = new L2ClientRemote(loader);
+
+            try
             {
-                logger.Info("Start fast local client check");
-                IsBusy = true;
-                ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr="Быстрая проверка файлов игры" });
+                await cacheClient.ReadClientModel(config.LocalInfoFile);
+                ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Считана сохраненная информация о файлах игры" });
 
-                cacheClient = new L2ClientLocal();
-                localClient = new L2ClientLocal();
-                remoteClient = new L2ClientRemote(loader);
+                await localClient.CreateModelFromDirectory(config.ConfigFields.ClientFolder, new CancellationTokenSource().Token);
+                ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Собрана сокращённая информация о файлах игры" });
 
-                try
-                {
-                    await cacheClient.ReadClientModel(config.LocalInfoFile);
-                    ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Считана сохраненная информация о файлах игры" });
-                }
-                catch (FileNotFoundException fnfex)
-                {
-
-                }
-                catch (JsonException jsonex)
-                {
-
-                }
-                catch (ArgumentNullException argnullex)
-                {
-
-                }
-
-                try
-                {
-                    await localClient.CreateModelFromDirectory(config.ConfigFields.ClientFolder, new CancellationTokenSource().Token);
-                    ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Собрана сокращённая информация о файлах игры" });
-                }
-                catch (FileNotFoundException fnfex)
-                {
-
-                }
-
-                try
-                {
-                    await remoteClient.LoadRemoteModel(config.RemoteInfoFile);
-                    ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Получена информация о игре с сервера" });
-                }
-                finally
-                {
-
-                }
+                ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Получаю информацию об игре с сервера" });
+                await remoteClient.LoadRemoteModel(config.RemoteInfoFile);
+                ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Получена информация об игре с сервера" });
 
                 //Compare cached model to remote
-                Difference = CompareModels (localClient, remoteClient, cacheClient);
+                Difference = CompareModels(localClient, remoteClient, cacheClient);
 
                 string msg = Difference.Count > 0 ? "Необходимо обновление" : "Файлы игры проверены";
-                ClientCheckFinished?.Invoke(this, new ClientCheckFinishEventArgs() { FinishMessage = msg, UpdateRequired = Difference.Count>0 });
-
-                IsBusy = false;
-                logger.Info("Finish fast local client check");
-
-            } else
-            {
-                logger.Error("Can't start fast local client check - L2Updater busy");
+                ClientCheckFinished?.Invoke(this, new ClientCheckFinishEventArgs() { FinishMessage = msg, UpdateRequired = Difference.Count > 0 });
             }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Fast check error!");
+                if (ClientCheckError == null)
+                    throw ex;
+                else
+                    ClientCheckError.Invoke(this, new ClientCheckErrorEventArgs()
+                    {
+                        Exeption = ex
+                    });
+            }
+
+            logger.Info("Finish fast local client check");
         }
 
-        public async Task FullLocalClientCheck(CancellationToken token)
+        public async void FullLocalClientCheck(CancellationToken token)
         {
-            if (IsBusy == false)
+            logger.Info("Start full local client check");
+
+            remoteClient = new L2ClientRemote(loader);
+            localClient = new L2ClientLocal();
+
+            ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Полная проверка файлов игры" });
+
+            try
             {
-                IsBusy = true;
-                logger.Info("Start full local client check");
+                await remoteClient.LoadRemoteModel(config.RemoteInfoFile);
+                ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Получена информация о игре с сервера" });
 
-                remoteClient = new L2ClientRemote(loader);
-                localClient = new L2ClientLocal();
-
-                ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Полная проверка файлов игры" });
-
-                try
-                {
-                    await remoteClient.LoadRemoteModel(config.RemoteInfoFile);
-                    ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Получена информация о игре с сервера" });
-                }
-                finally
-                {
-
-                }
-
-                try
-                {
-                    await localClient.CreateModelFromDirectory(config.ConfigFields.ClientFolder, token, true);
-                    await localClient.WriteClientModel(config.LocalInfoFile);
-                    ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Собрана полная информация о файлах игры" });
-                }
-                finally
-                {
-
-                }
+                await localClient.CreateModelFromDirectory(config.ConfigFields.ClientFolder, token, true);
+                await localClient.WriteClientModel(config.LocalInfoFile);
+                ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Собрана полная информация о файлах игры" });
 
                 Difference = CompareModels(localClient, remoteClient);
 
                 string msg = Difference.Count > 0 ? "Необходимо обновление" : "Файлы игры проверены";
                 ClientCheckFinished?.Invoke(this, new ClientCheckFinishEventArgs() { FinishMessage = msg, UpdateRequired = Difference.Count > 0 });
-
-                logger.Info("Finish full local client check");
-                IsBusy = false;
             }
-            else
+            catch (Exception ex)
             {
-                logger.Error("Can't start full local client check - L2Updater busy");
+                if (ClientCheckError == null)
+                    throw ex;
+                else
+                    ClientCheckError.Invoke(this, new ClientCheckErrorEventArgs()
+                    {
+                        Exeption = ex
+                    });
             }
+
+            logger.Info("Finish full local client check");
+
         }
 
         public async void UpdateClient(CancellationToken token)
         {
-            if (IsBusy==false)
+            logger.Info("Start updating client");
+
+            try
             {
-                IsBusy = true;
-                logger.Info("Start updating client");
-
-                try
-                {
-                    await loader.DownloadClientFiles(config.RemoteClientPath, config.ConfigFields.ClientFolder.LocalPath, Difference, token);
-                    await remoteClient.WriteClientModel(config.LocalInfoFile);
-                }
-                finally
-                {
-
-                }
-
-                ClientUpdateFinished?.Invoke(this, null);
-
-                IsBusy = false;
-                logger.Info("Finished updating client");
-            } else
-            {
-                logger.Error("Can't start updating local client - L2Updater busy");
+                await loader.DownloadClientFiles(config.RemoteClientPath, config.ConfigFields.ClientFolder.LocalPath, Difference, token);
+                await remoteClient.WriteClientModel(config.LocalInfoFile);
             }
+            catch (Exception ex)
+            {
+                if (ClientCheckError == null)
+                    throw ex;
+                else
+                    ClientCheckError.Invoke(this, new ClientCheckErrorEventArgs()
+                    {
+                        Exeption = ex
+                    });
+            }
+
+            ClientUpdateFinished?.Invoke(this, null);
+
+
+            logger.Info("Finished updating client");
+        }
+
+        public async void RewriteClient(CancellationToken token)
+        {
+            logger.Info("Start rewriting client");
+
+            remoteClient = new L2ClientRemote(loader);
+
+            ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Загрузка перечня файлов игры" });
+
+            try
+            {
+                await remoteClient.LoadRemoteModel(config.RemoteInfoFile);
+                ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Получена информация о игре с сервера" });
+
+                await loader.DownloadClientFiles(config.RemoteClientPath, config.ConfigFields.ClientFolder.LocalPath, remoteClient.ClientInfo.FilesInfo, token);
+                await remoteClient.WriteClientModel(config.LocalInfoFile);
+            }
+            catch (Exception ex)
+            {
+                if (ClientCheckError == null)
+                    throw ex;
+                else
+                    ClientCheckError.Invoke(this, new ClientCheckErrorEventArgs()
+                    {
+                        Exeption = ex
+                    });
+            }
+
+            ClientUpdateFinished?.Invoke(this, null);
+
+
+            logger.Info("Finished updating client");
         }
 
         private List<ClientFileInfo> CompareModels (L2ClientLocal local, L2ClientRemote remote, L2ClientLocal shadow)
@@ -184,14 +185,18 @@ namespace Updater
             foreach (ClientFileInfo fileinfo in remote.ClientInfo.FilesInfo)
             {
                 ClientFileInfo cachedinfo = shadow.ClientInfo?.FilesInfo.Find(m => m.FileName.Equals(fileinfo.FileName));
-                if ((cachedinfo == null) || (cachedinfo != fileinfo))
-                {
+                ClientFileInfo localinfo = local.ClientInfo.FilesInfo.Find(m => m.FileName.Equals(fileinfo.FileName));
+
+                if (localinfo==null)
                     difference.Add(fileinfo);
+                else if (cachedinfo != null)
+                {
+                    if ( (cachedinfo != fileinfo)||(localinfo.FileSize!=fileinfo.FileSize) )
+                        difference.Add(fileinfo);
                 }
                 else
                 {
-                    ClientFileInfo localinfo = local.ClientInfo.FilesInfo.Find(m => m.FileName.Equals(fileinfo.FileName));
-                    if ((localinfo == null) || (localinfo.FileSize != fileinfo.FileSize))
+                    if ( (localinfo.FileSize != fileinfo.FileSize) )
                         difference.Add(fileinfo);
                 }
             }
