@@ -81,12 +81,33 @@ namespace Updater
             logger.Info("Finish fast local client check");
         }
 
+        private void FullCheckCheckerProgress (object sender, FileCheckerProgressEventArgs args)
+        {
+            ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() 
+            { 
+                InfoStr = String.Format("Обрабатываю файл {0}", args.FileName),
+                ProgressMax = args.FilesCount,
+                ProgressValue = args.CurrentIndex
+            });
+        }
+
+        private void FullCheckCheckerFinish(object sender, FileCheckerFinishEventArgs args)
+        {
+            ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs()
+            {
+                InfoStr = String.Format("Обработка файлов клиента завершена"),
+                ProgressMax = args.FilesCount,
+            });
+        }
+
         public async void FullLocalClientCheck(CancellationToken token)
         {
             logger.Info("Start full local client check");
 
             remoteClient = new L2ClientRemote(loader);
             localClient = new L2ClientLocal();
+            localClient.Checker.FileCheckerProgress += FullCheckCheckerProgress;
+            localClient.Checker.FileCheckerFinish += FullCheckCheckerFinish;
 
             ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Полная проверка файлов игры" });
 
@@ -184,8 +205,8 @@ namespace Updater
 
             foreach (ClientFileInfo fileinfo in remote.ClientInfo.FilesInfo)
             {
-                ClientFileInfo cachedinfo = shadow.ClientInfo?.FilesInfo.Find(m => m.FileName.Equals(fileinfo.FileName));
-                ClientFileInfo localinfo = local.ClientInfo.FilesInfo.Find(m => m.FileName.Equals(fileinfo.FileName));
+                ClientFileInfo cachedinfo = shadow.ClientInfo?.FilesInfo.Find(m => 0 == String.Compare(m.FileName, fileinfo.FileName, StringComparison.OrdinalIgnoreCase));
+                ClientFileInfo localinfo = local.ClientInfo.FilesInfo.Find(m => 0 == String.Compare(m.FileName, fileinfo.FileName, StringComparison.OrdinalIgnoreCase));
 
                 if (localinfo==null)
                     difference.Add(fileinfo);
@@ -210,7 +231,7 @@ namespace Updater
 
             foreach (ClientFileInfo fileinfo in remote.ClientInfo.FilesInfo)
             {
-                ClientFileInfo localinfo = local.ClientInfo.FilesInfo.Find(m => m.FileName.Equals(fileinfo.FileName));
+                ClientFileInfo localinfo = local.ClientInfo.FilesInfo.Find(m => 0 == String.Compare(m.FileName, fileinfo.FileName, StringComparison.OrdinalIgnoreCase));
                 if ((localinfo == null) || (localinfo != fileinfo))
                     difference.Add(fileinfo);
             }

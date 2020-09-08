@@ -101,24 +101,15 @@ namespace Updater
 
             using var streamlocalfile = File.Create(localFileName);
             using var streamresp = httpClient.GetStreamAsync(uriBuilder.Uri);
-            using (var zipreader = ReaderFactory.Open(await streamresp))
-            {
-                stream = streamlocalfile;
-                this.token = token;
+            using var zipreader = ReaderFactory.Open(await streamresp);
+            stream = streamlocalfile;
+            this.token = token;
 
-                zipreader.EntryExtractionProgress += ExtractionProgress;
-                zipreader.MoveToNextEntry();
-                await Task.Run ( ()  => zipreader.WriteEntryTo(streamlocalfile), token);
+            zipreader.EntryExtractionProgress += ExtractionProgress;
+            zipreader.MoveToNextEntry();
+            await Task.Run(() => zipreader.WriteEntryTo(streamlocalfile), token);
 
-                /*
-                if (token.IsCancellationRequested)
-                {
-                    streamlocalfile.Close();
-                }
-                */
-
-                logger.Info("File loaded");
-            }
+            logger.Info("File loaded");
         }
 
         public async Task DownloadClientFiles (string remoteRelativePath, string LocalPath, List<ClientFileInfo> FilesList, CancellationToken token)

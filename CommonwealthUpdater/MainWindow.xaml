@@ -9,7 +9,7 @@
         Title="Lineage II Commonwealth Client Updater" 
         Width="460" Height="370" WindowStyle="None" 
         AllowsTransparency="True" Background="Transparent"
-        Initialized="updaterwindow_Initialized" ResizeMode="NoResize" ShowActivated="False">
+        ResizeMode="NoResize" ShowActivated="False">
         
     <Window.Resources>
         <Style x:Key="ImageButton" TargetType="Button">
@@ -235,7 +235,15 @@
                                 <LineBreak/>
                                 <Run Text="Разработано специально для gudilap.ru"/>
                                 <LineBreak/>
-                                <Run Text="Выражаю особую благодарность утятам, помогавшим в создании: ValeRos, Inst"/>
+                                <Run Text="Выражаю особую благодарность утятам, помогавшим в создании:"/>
+                                    <Run Text="ValeRos" ToolTip="Дизайн программы"/>, 
+                                    <Run Text="Inst" ToolTip="Доработка клиента, тестирование"/>,
+                                    <Run Text="wfmo" ToolTip="Советы по разработке, тестирование"/>
+                                <LineBreak/>
+                                <Run Text="Использованные компоненты:"/>
+                                    <Hyperlink NavigateUri="https://nlog-project.org/">NLog</Hyperlink>, 
+                                    <Hyperlink NavigateUri="http://www.ookii.org/software/dialogs/">Ookii.Dialogs</Hyperlink>,
+                                    <Hyperlink NavigateUri="https://github.com/adamhathcock/sharpcompress">SharpCompress</Hyperlink>
                                 <LineBreak/>
                                 <Hyperlink NavigateUri="www.gudilap.ru/l2launcher_license.txt" RequestNavigate="HyperLicense_Click">Лицензия на использование</Hyperlink>
                                 <LineBreak/>

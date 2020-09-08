@@ -6,11 +6,17 @@
     <UseWPF>true</UseWPF>
     <CefSharpAnyCpuSupport>true</CefSharpAnyCpuSupport>
     <SignAssembly>false</SignAssembly>
-    <ApplicationIcon>icon_duckling.ico</ApplicationIcon>
+    <ApplicationIcon>icons\favicon.ico</ApplicationIcon>
+    <Version>0.7.0</Version>
+    <Copyright>Korall</Copyright>
+    <PackageLicenseFile>license.txt</PackageLicenseFile>
+    <PackageIcon>favicon2.ico</PackageIcon>
+    <AssemblyOriginatorKeyFile>korall.pfx</AssemblyOriginatorKeyFile>
+    <DelaySign>false</DelaySign>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,6 +35,14 @@
     <None Remove="images\minimize.gif" />
     <None Remove="images\recheck.png" />
     <None Remove="images\settings.png" />
+    <None Include="..\license.txt">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+    <None Include="icons\favicon2.ico">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -68,6 +82,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="LauncherRes.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>LauncherRes.resx</DependentUpon>
+    </Compile>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -76,6 +95,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Update="LauncherRes.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>LauncherRes.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

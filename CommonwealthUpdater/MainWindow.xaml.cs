@@ -15,7 +15,6 @@ using Launcher;
 using System.Diagnostics;
 using System.Net.Http;
 using Ookii.Dialogs.Wpf;
-using System.Net.NetworkInformation;
 
 namespace CommonwealthUpdater
 {
@@ -24,18 +23,255 @@ namespace CommonwealthUpdater
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static NLog.Logger logger;// = NLog.LogManager.GetCurrentClassLogger();
+        private static NLog.Logger logger;
 
         static L2UpdaterConfig UpdaterConfig;
 
         CancellationTokenSource updaterCancellationTokenSource;
         CancellationTokenSource fullcheckCancellationTokenSource;
 
+        public enum LauncherActions
+        {
+            WaitForAction,
+            ConfigNotSet,
+            SelfUpdate,
+            CheckFilesFast,
+            CheckFilesFull,
+            UpdateFiles,
+            UpdateFilesFull,
+            Lineage2Run
+        };
+
+        LauncherActions LauncherStatus
+        {
+            get => _LauncherStatus;
+            set
+            { 
+                switch (_LauncherStatus)
+                {
+                    case LauncherActions.WaitForAction:
+                        switch (value)
+                        {
+                            case LauncherActions.WaitForAction:
+                                WaitForAction_Enter();
+                                break;
+                            case LauncherActions.SelfUpdate:
+                                WaitForAction_Exit();
+                                SelfUpdate_Enter();
+                                break;
+                            case LauncherActions.CheckFilesFast:
+                                WaitForAction_Exit();
+                                CheckFilesFast_Enter();
+                                break;
+                            case LauncherActions.UpdateFiles:
+                                WaitForAction_Exit();
+                                UpdateFiles_Enter();
+                                break;
+                            case LauncherActions.Lineage2Run:
+                                WaitForAction_Exit();
+                                Lineage2Run_Enter();
+                                break;
+                            case LauncherActions.CheckFilesFull:
+                                WaitForAction_Exit();
+                                CheckFilesFull_Enter();
+                                break;
+                            case LauncherActions.UpdateFilesFull:
+                                WaitForAction_Exit();
+                                CheckFilesFull_Enter();
+                                break;
+                            case LauncherActions.ConfigNotSet:
+                                WaitForAction_Exit();
+                                ConfigNotSet_Enter();
+                                break;
+                        }
+                        _LauncherStatus = value;
+                        break;
+                    case LauncherActions.SelfUpdate:
+                        switch (value)
+                        {
+                            case LauncherActions.WaitForAction:
+                                SelfUpdate_Exit();
+                                WaitForAction_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.SelfUpdate:
+                                SelfUpdate_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.ConfigNotSet:
+                                SelfUpdate_Exit();
+                                ConfigNotSet_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.CheckFilesFast:
+                            case LauncherActions.UpdateFiles:
+                            case LauncherActions.Lineage2Run:
+                            case LauncherActions.CheckFilesFull:
+                            case LauncherActions.UpdateFilesFull:
+                                break;
+                        }
+                        break;
+                    case LauncherActions.ConfigNotSet:
+                        switch (value)
+                        {
+                            case LauncherActions.WaitForAction:
+                                ConfigNotSet_Exit();
+                                WaitForAction_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.Lineage2Run:
+                                ConfigNotSet_Exit();
+                                Lineage2Run_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.ConfigNotSet:
+                                ConfigNotSet_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.SelfUpdate:
+                            case LauncherActions.CheckFilesFast:
+                            case LauncherActions.UpdateFiles:
+                            case LauncherActions.CheckFilesFull:
+                            case LauncherActions.UpdateFilesFull:
+                                break;
+                        }
+                        break;
+                    case LauncherActions.CheckFilesFast:
+                        switch (value)
+                        {
+                            case LauncherActions.WaitForAction:
+                                CheckFilesFast_Exit();
+                                WaitForAction_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.CheckFilesFast:
+                                CheckFilesFast_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.Lineage2Run:
+                                CheckFilesFast_Exit();
+                                Lineage2Run_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.ConfigNotSet:
+                                CheckFilesFast_Exit();
+                                ConfigNotSet_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.CheckFilesFull:
+                            case LauncherActions.UpdateFilesFull:
+                            case LauncherActions.UpdateFiles:
+                            case LauncherActions.SelfUpdate:
+                                break;
+                        }
+                        break;
+                    case LauncherActions.UpdateFiles:
+                        switch (value)
+                        {
+                            case LauncherActions.WaitForAction:
+                                UpdateFiles_Exit();
+                                WaitForAction_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.ConfigNotSet:
+                                UpdateFiles_Exit();
+                                ConfigNotSet_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.UpdateFiles:
+                                UpdateFiles_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.SelfUpdate:
+                            case LauncherActions.CheckFilesFast:
+                            case LauncherActions.Lineage2Run:
+                            case LauncherActions.CheckFilesFull:
+                            case LauncherActions.UpdateFilesFull:
+                                break;
+                        }
+                        break;
+                    case LauncherActions.Lineage2Run:
+                        switch (value)
+                        {
+                            case LauncherActions.WaitForAction:
+                                if (Lineage2Run_Exit())
+                                {
+                                    WaitForAction_Enter();
+                                    _LauncherStatus = value;
+                                }
+                                break;
+                            case LauncherActions.Lineage2Run:
+                                Lineage2Run_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.ConfigNotSet:
+                                Lineage2Run_Exit();
+                                ConfigNotSet_Enter();
+                                _LauncherStatus = value;
+                                break;
+                            case LauncherActions.SelfUpdate:
+                            case LauncherActions.CheckFilesFast:
+                            case LauncherActions.UpdateFiles:
+                            case LauncherActions.CheckFilesFull:
+                            case LauncherActions.UpdateFilesFull:
+                                break;
+                        }
+                        break;
+                    case LauncherActions.CheckFilesFull:
+                        switch (value)
+                        {
+                            case LauncherActions.WaitForAction:
+                                CheckFilesFull_Exit();
+                                WaitForAction_Enter();
+                                break;
+                            case LauncherActions.ConfigNotSet:
+                                CheckFilesFull_Exit();
+                                ConfigNotSet_Enter();
+                                break;
+                            case LauncherActions.SelfUpdate:
+                            case LauncherActions.CheckFilesFast:
+                            case LauncherActions.UpdateFiles:
+                            case LauncherActions.Lineage2Run:
+                            case LauncherActions.CheckFilesFull:
+                            case LauncherActions.UpdateFilesFull:
+                                break;
+                        }
+                        break;
+                    case LauncherActions.UpdateFilesFull:
+                        switch (value)
+                        {
+                            case LauncherActions.WaitForAction:
+                                UpdateFilesFull_Exit();
+                                WaitForAction_Enter();
+                                break;
+                            case LauncherActions.SelfUpdate:
+                            case LauncherActions.CheckFilesFast:
+                            case LauncherActions.UpdateFiles:
+                            case LauncherActions.Lineage2Run:
+                            case LauncherActions.CheckFilesFull:
+                                break;
+                            case LauncherActions.UpdateFilesFull:
+                                UpdateFilesFull_Enter();
+                                break;
+                            case LauncherActions.ConfigNotSet:
+                                UpdateFilesFull_Exit();
+                                ConfigNotSet_Enter();
+                                break;
+                        }
+                        break;
+                }
+            }
+        }
+
+        LauncherActions _LauncherStatus;
+
         public MainWindow()
         {
             NLog.LogManager.LoadConfiguration(AppDomain.CurrentDomain.BaseDirectory+"\\nlog.config");
             logger = NLog.LogManager.GetCurrentClassLogger();
-            
+
+            logger.Info("Start work");
+
             UpdaterConfig = new L2UpdaterConfig();
 
             InitializeComponent();
@@ -45,10 +281,118 @@ namespace CommonwealthUpdater
             UpdaterConfig.Read();
         }
 
-        private void updaterwindow_Initialized(object sender, EventArgs e)
+        private void WaitForAction_Enter()
         {
-            logger.Info("Start init updater");
-            
+            UpdaterSelect.IsEnabled = true;
+            SettingsBtn.IsEnabled = true;
+            RecheckBtn.IsEnabled = true;
+
+            PlayL2.IsEnabled = true;
+            UpdateL2.IsEnabled = true;
+            BtnFullCheck.IsEnabled = true;
+            BtnFullReload.IsEnabled = true;
+        }
+        private void WaitForAction_Exit()
+        {
+
+        }
+
+        private void ConfigNotSet_Enter ()
+        {
+            UpdaterSelect.IsEnabled = false;
+            SettingsBtn.IsEnabled = true;
+            RecheckBtn.IsEnabled = false;
+
+            PlayL2.IsEnabled = false;
+            UpdateL2.IsEnabled = false;
+            BtnFullCheck.IsEnabled = false;
+            BtnFullReload.IsEnabled = false;
+        }
+
+        private void ConfigNotSet_Exit()
+        {
+            UpdaterSelect.IsEnabled = true;
+            SettingsBtn.IsEnabled = true;
+            RecheckBtn.IsEnabled = true;
+
+            PlayL2.IsEnabled = true;
+            UpdateL2.IsEnabled = true;
+            BtnFullCheck.IsEnabled = true;
+            BtnFullReload.IsEnabled = true;
+        }
+
+        private void SelfUpdate_Enter()
+        {
+
+        }
+
+        private void SelfUpdate_Exit()
+        {
+
+        }
+
+        private void CheckFilesFast_Enter()
+        {
+            UpdaterSelect.IsEnabled = true;
+            SettingsBtn.IsEnabled = true;
+            RecheckBtn.IsEnabled = true;
+
+            PlayL2.IsEnabled = false;
+            UpdateL2.IsEnabled = false;
+            BtnFullCheck.IsEnabled = false;
+            BtnFullReload.IsEnabled = false;
+        }
+
+        private void CheckFilesFast_Exit()
+        {
+
+        }
+
+        private void UpdateFiles_Enter()
+        {
+            UpdaterSelect.IsEnabled = true;
+            SettingsBtn.IsEnabled = true;
+            RecheckBtn.IsEnabled = true;
+
+            PlayL2.IsEnabled = false;
+            BtnUpdateL2Text.Text = "Остановить";
+            BtnFullCheck.IsEnabled = false;
+            BtnFullReload.IsEnabled = false;
+        }
+
+        private void UpdateFiles_Exit()
+        {
+            BtnUpdateL2Text.Text = "Обновить";
+        }
+
+        private void Lineage2Run_Enter()
+        {
+
+        }
+
+        private bool Lineage2Run_Exit()
+        {
+            return true;
+        }
+
+        private void CheckFilesFull_Enter()
+        {
+
+        }
+
+        private void CheckFilesFull_Exit()
+        {
+
+        }
+
+        private void UpdateFilesFull_Enter()
+        {
+
+        }
+
+        private void UpdateFilesFull_Exit()
+        {
+
         }
 
         private void MainGrid_MouseDown(object sender, MouseButtonEventArgs e)
@@ -71,7 +415,7 @@ namespace CommonwealthUpdater
             switch (args.ReadException)
             {
                 case ArgumentNullException nullex:
-                    LauncherDialogs.MessageBox(String.Format("Нет конфигурации программы! Введите настройки."));
+                    LauncherDialogs.MessageBox(String.Format("Нет конфигурации программы! Введите настройки. {0}{1}", Environment.NewLine, nullex.Message));
                     break;
                 default:
                     //LauncherDialogs.MessageBox(String.Format("Ошибка чтения файла конфигурации! {0}", args.ReadException.Message));
@@ -99,31 +443,35 @@ namespace CommonwealthUpdater
         private void UpdaterClick(object sender, RoutedEventArgs e)
         {
             MainSelector.SelectedIndex = 0;
+            LauncherStatus = LauncherActions.CheckFilesFast;
 
-            UpdateL2.IsEnabled = false;
-
-            Loader loader = new Loader();
-            L2Updater updater = new L2Updater(loader, UpdaterConfig);
-            UpdateL2.Tag = updater;
-
-            updater.ClientCheckUpdate += ClientCheckUpdate;
-            updater.ClientCheckFinished += ClientCheckFinish;
-            updater.ClientCheckError += ClientCheckError;
-            loader.LoaderProgress += ClientLoadUpdate;
-            loader.UnZipProgress += LoadFileExtractProgress;
-            loader.RemoteAddr = UpdaterConfig.ConfigFields.DownloadAddress;
-
-            InfoBlock.Text = "Проверка клиента игры Lineage II";
-
-            try
+            if (LauncherStatus == LauncherActions.CheckFilesFast)
             {
-                updater.FastLocalClientCheck();
-            }
-            finally
-            {
-            }
+                UpdateL2.IsEnabled = false;
 
-            PlayL2.IsEnabled = updater.ClientCanRun;
+                Loader loader = new Loader();
+                L2Updater updater = new L2Updater(loader, UpdaterConfig);
+                UpdateL2.Tag = updater;
+
+                updater.ClientCheckUpdate += ClientCheckUpdate;
+                updater.ClientCheckFinished += ClientCheckFinish;
+                updater.ClientCheckError += ClientCheckError;
+                loader.LoaderProgress += ClientLoadUpdate;
+                loader.UnZipProgress += LoadFileExtractProgress;
+                loader.RemoteAddr = UpdaterConfig.ConfigFields.DownloadAddress;
+
+                InfoBlock.Text = "Проверка клиента игры Lineage II";
+
+                try
+                {
+                    updater.FastLocalClientCheck();
+                }
+                finally
+                {
+                }
+
+                PlayL2.IsEnabled = updater.ClientCanRun;
+            }
         }
 
         private void Settings_Click(object sender, RoutedEventArgs e)
@@ -309,6 +657,8 @@ namespace CommonwealthUpdater
                         updater.Difference.Sum(s => s.FileSize) / 1024 / 1024)
                     };
                 }
+
+                LauncherStatus = LauncherActions.WaitForAction;
             });
         }
 
@@ -329,6 +679,7 @@ namespace CommonwealthUpdater
                     LauncherDialogs.MessageBox(args.Exeption.Message);
                     break;
             }
+            LauncherStatus = LauncherActions.WaitForAction;
         }
 
         private void ClientCheckUpdate(object sender, ClientCheckUpdateEventArgs args)
@@ -372,44 +723,71 @@ namespace CommonwealthUpdater
                 updatepercentage.Value = 100;
                 InfoBlock.Text = String.Format("Игра обновлена");
                 InfoBlock.Foreground = Brushes.Green;
+
+                LauncherStatus = LauncherActions.WaitForAction;
             });
+        }
+
+        private void ProcessL2Exited (object sender, EventArgs args)
+        {
+            LauncherStatus = LauncherActions.WaitForAction;
         }
 
         private void PlayL2_Click(object sender, RoutedEventArgs e)
         {
-            Process proc = new Process();
-            proc.StartInfo.FileName = UpdaterConfig.ClientExeFile;
-            proc.StartInfo.UseShellExecute = true;
-            proc.StartInfo.Verb = "runas";
-            proc.Start();
+            try
+            {
+                LauncherStatus = LauncherActions.Lineage2Run;
+                ProcessStartInfo l2info = new ProcessStartInfo();
+                l2info.EnvironmentVariables["__COMPAT_LAYER"] = "RunAsInvoker";
+                l2info.FileName = UpdaterConfig.ClientExeFile;
+
+                Process l2run = Process.Start(l2info);
+                l2run.Exited += ProcessL2Exited;
+
+            }
+            catch (Exception ex)
+            {
+                InfoBlock.Text = "Запуск невозможен!";
+                InfoBlock.Foreground = Brushes.Red;
+                InfoBlock2.Text = ex.Message;
+                InfoBlock2.Foreground = Brushes.Black;
+            }
         }
 
         private void UpdateL2_Click(object sender, RoutedEventArgs e)
         {
             L2Updater updater = (L2Updater)((Button)sender).Tag;
 
-            if (BtnUpdateL2Text.Text.Equals("Обновить"))
+            if (LauncherStatus == LauncherActions.WaitForAction)
             {
-                BtnUpdateL2Text.Text = "Остановить";
 
-                updaterCancellationTokenSource = new CancellationTokenSource();
-
-                Loader loader = new Loader();
-
-                loader.LoaderProgress += ClientLoadUpdate;
-                updater.ClientUpdateFinished += ClientUpdateFinished;
-
-                try
+                if (BtnUpdateL2Text.Text.Equals("Обновить"))
                 {
-                    PlayL2.IsEnabled = false;
-                    updater.UpdateClient(updaterCancellationTokenSource.Token);
-                }
-                finally
-                {
-                }
+                    LauncherStatus = LauncherActions.UpdateFiles;
+                    BtnUpdateL2Text.Text = "Остановить";
 
-            } else
+                    updaterCancellationTokenSource = new CancellationTokenSource();
+
+                    Loader loader = new Loader();
+
+                    loader.LoaderProgress += ClientLoadUpdate;
+                    updater.ClientUpdateFinished += ClientUpdateFinished;
+
+                    try
+                    {
+                        PlayL2.IsEnabled = false;
+                        updater.UpdateClient(updaterCancellationTokenSource.Token);
+                    }
+                    finally
+                    {
+                    }
+
+                }
+            } else if (LauncherStatus == LauncherActions.UpdateFiles)
             {
+                LauncherStatus = LauncherActions.WaitForAction;
+
                 updaterCancellationTokenSource.Cancel();
                 BtnUpdateL2Text.Text = "Обновить";
                 InfoBlock.Text = "Обновление остановлено";
@@ -424,129 +802,142 @@ namespace CommonwealthUpdater
         private void BtnFullCheck_Click(object sender, RoutedEventArgs e)
         {
             L2Updater updater;
-            switch (BtnFullCheckText.Text)
+            if (LauncherStatus == LauncherActions.WaitForAction)
             {
-                case "Полная проверка":
-                    BtnFullCheckText.Text = "Остановить проверку";
-                    BtnFullReload.IsEnabled = false;
+                LauncherStatus = LauncherActions.CheckFilesFull;
+                switch (BtnFullCheckText.Text)
+                {
+                    case "Полная проверка":
+                        BtnFullCheckText.Text = "Остановить проверку";
+                        BtnFullReload.IsEnabled = false;
 
-                    Loader loader = new Loader
-                    {
-                        RemoteAddr = UpdaterConfig.ConfigFields.DownloadAddress
-                    };
+                        Loader loader = new Loader
+                        {
+                            RemoteAddr = UpdaterConfig.ConfigFields.DownloadAddress
+                        };
 
-                    updater = new L2Updater(loader, UpdaterConfig);
-                    updater.ClientCheckUpdate += FullCheckActionProgress;
-                    updater.ClientCheckFinished += FullClientCheckFinish;
-                    loader.LoaderProgress += FullClientLoadUpdate;
-                    loader.UnZipProgress += FullLoadFileExtractProgress;
+                        updater = new L2Updater(loader, UpdaterConfig);
+                        updater.ClientCheckUpdate += FullCheckActionProgress;
+                        updater.ClientCheckFinished += FullClientCheckFinish;
+                        loader.LoaderProgress += FullClientLoadUpdate;
+                        loader.UnZipProgress += FullLoadFileExtractProgress;
 
-                    BtnFullCheck.Tag = updater;
+                        BtnFullCheck.Tag = updater;
 
-                    fullcheckCancellationTokenSource = new CancellationTokenSource();
+                        fullcheckCancellationTokenSource = new CancellationTokenSource();
 
-                    try
-                    {
-                        updater.FullLocalClientCheck(fullcheckCancellationTokenSource.Token);
-                    }
-                    catch (RemoteModelException exr)
-                    {
-                        MessageBox.Show(String.Format("Не могу соединиться с {0} для получения файла {1}", exr.RemoteAddr, exr.RemoteFile));
-                        SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                        return;
-                    }
-                    catch (HttpRequestException exhttp)
-                    {
-                        MessageBox.Show(String.Format("Не могу соединиться с {0}", exhttp.TargetSite));
-                        SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                        return;
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(ex.Message);
-                        SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                        return;
-                    }
-                    break;
+                        try
+                        {
+                            updater.FullLocalClientCheck(fullcheckCancellationTokenSource.Token);
+                        }
+                        catch (RemoteModelException exr)
+                        {
+                            MessageBox.Show(String.Format("Не могу соединиться с {0} для получения файла {1}", exr.RemoteAddr, exr.RemoteFile));
+                            SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                            return;
+                        }
+                        catch (HttpRequestException exhttp)
+                        {
+                            MessageBox.Show(String.Format("Не могу соединиться с {0}", exhttp.TargetSite));
+                            SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                            return;
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show(ex.Message);
+                            SettingsBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                            return;
+                        }
+                        break;
 
-                case "Обновить":
-                    BtnFullCheckText.Text = "Остановить обновление";
-                    BtnFullReload.IsEnabled = false;
+                    case "Обновить":
+                        BtnFullCheckText.Text = "Остановить обновление";
+                        BtnFullReload.IsEnabled = false;
 
-                    fullcheckCancellationTokenSource = new CancellationTokenSource();
+                        fullcheckCancellationTokenSource = new CancellationTokenSource();
 
-                    updater = (L2Updater)BtnFullCheck.Tag;
+                        updater = (L2Updater)BtnFullCheck.Tag;
 
-                    updater.ClientUpdateFinished += FullClientUpdateFinished;
+                        updater.ClientUpdateFinished += FullClientUpdateFinished;
 
-                    try
-                    {
-                        updater.UpdateClient(fullcheckCancellationTokenSource.Token);
-                    }
-                    finally
-                    {
-                    }
-                    break;
-                case "Остановить проверку":
-                    fullcheckCancellationTokenSource.Cancel();
-                    BtnFullReload.IsEnabled = true;
-                    BtnFullCheckText.Text = "Полная проверка";
-                    FullCheckInfo1.Text = "Проверка остановлена";
-                    FullCheckInfo1.Foreground = Brushes.Black;
-                    break;
-                case "Остановить обновление":
-                    fullcheckCancellationTokenSource.Cancel();
-                    BtnFullReload.IsEnabled = true;
-                    BtnFullCheckText.Text = "Обновить";
-                    FullCheckInfo1.Text = "Обновление остановлено";
-                    FullCheckInfo1.Foreground = Brushes.Black;
-                    break;
-                default:
-                    break;
+                        try
+                        {
+                            updater.UpdateClient(fullcheckCancellationTokenSource.Token);
+                        }
+                        finally
+                        {
+                        }
+                        break;
+                    case "Остановить проверку":
+                        fullcheckCancellationTokenSource.Cancel();
+                        BtnFullReload.IsEnabled = true;
+                        BtnFullCheckText.Text = "Полная проверка";
+                        FullCheckInfo1.Text = "Проверка остановлена";
+                        FullCheckInfo1.Foreground = Brushes.Black;
+
+                        LauncherStatus = LauncherActions.WaitForAction;
+
+                        break;
+                    case "Остановить обновление":
+                        fullcheckCancellationTokenSource.Cancel();
+                        BtnFullReload.IsEnabled = true;
+                        BtnFullCheckText.Text = "Обновить";
+                        FullCheckInfo1.Text = "Обновление остановлено";
+                        FullCheckInfo1.Foreground = Brushes.Black;
+
+                        LauncherStatus = LauncherActions.WaitForAction;
+
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 
         private void BtnFullReload_Click(object sender, RoutedEventArgs e)
         {
             L2Updater updater;
-            switch (BtnFullReloadText.Text)
+            if (LauncherStatus == LauncherActions.UpdateFilesFull)
             {
-                case "Полная перезапись":
-                    BtnFullReloadText.Text = "Остановить перезапись";
-                    BtnFullCheck.IsEnabled = false;
+                switch (BtnFullReloadText.Text)
+                {
+                    case "Полная перезапись":
+                        BtnFullReloadText.Text = "Остановить перезапись";
+                        BtnFullCheck.IsEnabled = false;
 
-                    Loader loader = new Loader
-                    {
-                        RemoteAddr = UpdaterConfig.ConfigFields.DownloadAddress
-                    };
+                        Loader loader = new Loader
+                        {
+                            RemoteAddr = UpdaterConfig.ConfigFields.DownloadAddress
+                        };
 
-                    updater = new L2Updater(loader, UpdaterConfig);
-                    updater.ClientCheckUpdate += FullCheckActionProgress;
-                    updater.ClientCheckFinished += FullClientCheckFinish;
-                    loader.LoaderProgress += FullClientLoadUpdate;
-                    loader.UnZipProgress += FullLoadFileExtractProgress;
+                        updater = new L2Updater(loader, UpdaterConfig);
+                        updater.ClientCheckUpdate += FullCheckActionProgress;
+                        updater.ClientCheckFinished += FullClientCheckFinish;
+                        loader.LoaderProgress += FullClientLoadUpdate;
+                        loader.UnZipProgress += FullLoadFileExtractProgress;
 
-                    BtnFullReload.Tag = updater;
+                        BtnFullReload.Tag = updater;
 
-                    fullcheckCancellationTokenSource = new CancellationTokenSource();
+                        fullcheckCancellationTokenSource = new CancellationTokenSource();
 
-                    try
-                    {
-                        updater.RewriteClient(fullcheckCancellationTokenSource.Token);
-                    }
-                    finally
-                    {
+                        try
+                        {
+                            updater.RewriteClient(fullcheckCancellationTokenSource.Token);
+                        }
+                        finally
+                        {
 
-                    }
+                        }
 
-                    break;
-                case "Остановить перезапись":
-                    fullcheckCancellationTokenSource.Cancel();
-                    BtnFullCheck.IsEnabled = true;
-                    BtnFullReloadText.Text = "Полная перезапись";
-                    FullCheckInfo1.Text = "Перезапись остановлена";
-                    FullCheckInfo1.Foreground = Brushes.Black;
-                    break;
+                        break;
+                    case "Остановить перезапись":
+                        fullcheckCancellationTokenSource.Cancel();
+                        BtnFullCheck.IsEnabled = true;
+                        BtnFullReloadText.Text = "Полная перезапись";
+                        FullCheckInfo1.Text = "Перезапись остановлена";
+                        FullCheckInfo1.Foreground = Brushes.Black;
+                        break;
+                }
             }
         }
 
@@ -562,6 +953,8 @@ namespace CommonwealthUpdater
 
                 BtnFullCheckText.Text = "Полная проверка";
                 BtnFullReload.IsEnabled = true;
+
+                LauncherStatus = LauncherActions.WaitForAction;
             });
         }
 
@@ -592,6 +985,8 @@ namespace CommonwealthUpdater
                 {
                     BtnFullCheckText.Text = "Полная проверка";
                     BtnFullCheck.ToolTip = new TextBlock();
+
+                    LauncherStatus = LauncherActions.WaitForAction;
                 }
             });
         }
@@ -633,10 +1028,6 @@ namespace CommonwealthUpdater
         }
         #endregion
 
-        private void Button_Click_2(object sender, RoutedEventArgs e)
-        {
-
-        }
-
     }
+
 }
