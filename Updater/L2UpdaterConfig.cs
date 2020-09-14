@@ -21,7 +21,7 @@ namespace Config
 
         public class Fields
         {
-            public Uri DownloadAddress { get; set; } = new Uri("localhost:9000");
+            public Uri DownloadAddress { get; set; } = new Uri("http://l2-update.gudilap.ru");
             public Uri ClientFolder { 
                 get => PlacedInClientFolder ? new Uri(AppDomain.CurrentDomain.BaseDirectory) : _ClientFolder;
                 set { _ClientFolder = value; }

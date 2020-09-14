@@ -28,7 +28,7 @@ namespace Updater
             sha256 = SHA256.Create();
         }
 
-        public async Task<ClientFileInfo> GetFileInfo (string filename, bool complete = false)
+        public async Task<ClientFileInfo> GetFileInfo(string filename, bool complete = false)
         {
             ClientFileInfo clientFileInfo = new ClientFileInfo
             {
@@ -48,7 +48,7 @@ namespace Updater
             return clientFileInfo;
         }
 
-        public async Task<List<ClientFileInfo>> GetFilesListInfo (List<string> filenames, string localpath, CancellationToken token, bool complete = false)
+        public async Task<List<ClientFileInfo>> GetFilesListInfo(List<string> filenames, string localpath, CancellationToken token, bool complete = false)
         {
             List<ClientFileInfo> res = new List<ClientFileInfo>();
 
@@ -77,6 +77,27 @@ namespace Updater
             });
 
             return res;
+        }
+
+        public static bool FilesCompare(ClientFileInfo localinfo, ClientFileInfo remoteinfo, ClientFileInfo cachedinfo = null)
+        {
+            bool ret = false;
+            if ((localinfo == null) || (remoteinfo == null))
+                return false;
+            if (remoteinfo.AllowLocalChange == true)
+                return true;
+            if (cachedinfo==null)
+            {
+                if (localinfo.FileSize == remoteinfo.FileSize)
+                    if ((localinfo.Changed - remoteinfo.Changed) < new TimeSpan(0, 5, 0))
+                        ret = true;
+            } else
+            {
+                if (cachedinfo.Hash.SequenceEqual(remoteinfo.Hash))
+                    if (remoteinfo.FileSize == localinfo.FileSize)
+                        ret = true;
+            }
+            return ret;
         }
 
     }

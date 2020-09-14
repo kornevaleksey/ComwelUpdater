@@ -20,8 +20,8 @@ namespace Updater
         public event EventHandler ClientUpdateFinished;
 
         public List<ClientFileInfo> Difference { get; private set; }
-        public bool IsBusy { get; private set; }
         public bool ClientCanRun { get => File.Exists(config.ClientExeFile); }
+        public bool UpdateIsNeed { get => Difference!=null&&Difference.Count > 0; }
 
         L2ClientLocal cacheClient;
         L2ClientLocal localClient;
@@ -35,13 +35,11 @@ namespace Updater
             this.loader = loader;
             this.config = config;
 
-            this.IsBusy = false;
         }
 
         public async void FastLocalClientCheck()
         {
             logger.Info("Start fast local client check");
-            IsBusy = true;
             ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr="Быстрая проверка файлов игры" });
 
             cacheClient = new L2ClientLocal();
@@ -162,7 +160,6 @@ namespace Updater
 
             ClientUpdateFinished?.Invoke(this, null);
 
-
             logger.Info("Finished updating client");
         }
 
@@ -195,7 +192,6 @@ namespace Updater
 
             ClientUpdateFinished?.Invoke(this, null);
 
-
             logger.Info("Finished updating client");
         }
 
@@ -208,18 +204,8 @@ namespace Updater
                 ClientFileInfo cachedinfo = shadow.ClientInfo?.FilesInfo.Find(m => 0 == String.Compare(m.FileName, fileinfo.FileName, StringComparison.OrdinalIgnoreCase));
                 ClientFileInfo localinfo = local.ClientInfo.FilesInfo.Find(m => 0 == String.Compare(m.FileName, fileinfo.FileName, StringComparison.OrdinalIgnoreCase));
 
-                if (localinfo==null)
+                if (FileChecker.FilesCompare(localinfo, fileinfo, cachedinfo) == false)
                     difference.Add(fileinfo);
-                else if (cachedinfo != null)
-                {
-                    if ( (cachedinfo != fileinfo)||(localinfo.FileSize!=fileinfo.FileSize) )
-                        difference.Add(fileinfo);
-                }
-                else
-                {
-                    if ( (localinfo.FileSize != fileinfo.FileSize) )
-                        difference.Add(fileinfo);
-                }
             }
 
             return difference;
@@ -232,8 +218,9 @@ namespace Updater
             foreach (ClientFileInfo fileinfo in remote.ClientInfo.FilesInfo)
             {
                 ClientFileInfo localinfo = local.ClientInfo.FilesInfo.Find(m => 0 == String.Compare(m.FileName, fileinfo.FileName, StringComparison.OrdinalIgnoreCase));
-                if ((localinfo == null) || (localinfo != fileinfo))
+                if (FileChecker.FilesCompare(localinfo, fileinfo) == false)
                     difference.Add(fileinfo);
+        
             }
 
             return difference;
