@@ -89,7 +89,7 @@ namespace Updater
             if (cachedinfo==null)
             {
                 if (localinfo.FileSize == remoteinfo.FileSize)
-                    if ((localinfo.Changed - remoteinfo.Changed) < new TimeSpan(0, 5, 0))
+                    //if ((localinfo.Changed - remoteinfo.Changed) < new TimeSpan(0, 5, 0))
                         ret = true;
             } else
             {

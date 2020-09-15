@@ -156,6 +156,7 @@ namespace Updater
                     {
                         Exeption = ex
                     });
+                return;
             }
 
             ClientUpdateFinished?.Invoke(this, null);

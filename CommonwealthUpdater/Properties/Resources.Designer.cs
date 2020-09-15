@@ -61,82 +61,12 @@ namespace Launcher.Properties {
         }
         
         /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Icon, аналогичного (Значок).
+        ///   Ищет локализованную строку, похожую на 15.09.2020 22:46:26,84 
+        ///.
         /// </summary>
-        internal static System.Drawing.Icon app_icon_1_16 {
+        internal static string BuildDate {
             get {
-                object obj = ResourceManager.GetObject("app_icon_1_16", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Icon, аналогичного (Значок).
-        /// </summary>
-        internal static System.Drawing.Icon app_icon_1_256 {
-            get {
-                object obj = ResourceManager.GetObject("app_icon_1_256", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Icon, аналогичного (Значок).
-        /// </summary>
-        internal static System.Drawing.Icon app_icon_1_32 {
-            get {
-                object obj = ResourceManager.GetObject("app_icon_1_32", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Icon, аналогичного (Значок).
-        /// </summary>
-        internal static System.Drawing.Icon app_icon_1_48 {
-            get {
-                object obj = ResourceManager.GetObject("app_icon_1_48", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Icon, аналогичного (Значок).
-        /// </summary>
-        internal static System.Drawing.Icon app_icon_2_16 {
-            get {
-                object obj = ResourceManager.GetObject("app_icon_2_16", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Icon, аналогичного (Значок).
-        /// </summary>
-        internal static System.Drawing.Icon app_icon_2_256 {
-            get {
-                object obj = ResourceManager.GetObject("app_icon_2_256", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Icon, аналогичного (Значок).
-        /// </summary>
-        internal static System.Drawing.Icon app_icon_2_32 {
-            get {
-                object obj = ResourceManager.GetObject("app_icon_2_32", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Icon, аналогичного (Значок).
-        /// </summary>
-        internal static System.Drawing.Icon app_icon_2_48 {
-            get {
-                object obj = ResourceManager.GetObject("app_icon_2_48", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
+                return ResourceManager.GetString("BuildDate", resourceCulture);
             }
         }
     }

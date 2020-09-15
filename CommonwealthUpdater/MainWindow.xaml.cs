@@ -15,6 +15,7 @@ using Launcher;
 using System.Diagnostics;
 using System.Net.Http;
 using Ookii.Dialogs.Wpf;
+using System.Reflection;
 
 namespace CommonwealthUpdater
 {
@@ -279,6 +280,10 @@ namespace CommonwealthUpdater
 
             logger.Info("Start work");
 
+           
+            var version = FileVersionInfo.GetVersionInfo(Assembly.GetEntryAssembly().Location);
+            version = FileVersionInfo.GetVersionInfo(Process.GetCurrentProcess().MainModule.FileName);
+
             UpdaterConfig = new L2UpdaterConfig();
 
             InitializeComponent();
@@ -286,6 +291,8 @@ namespace CommonwealthUpdater
             UpdaterConfig.ConfigFinishedRead += ConfigFinishedRead;
             UpdaterConfig.ConfigReadError += ConfigReadError;
             UpdaterConfig.Read();
+
+            txtbVersionInfo.Text = String.Format("Версия {0} от {1} © Korall", Assembly.GetEntryAssembly().GetName().Version, Launcher.Properties.Resources.BuildDate.Trim());
         }
 
         private void WaitForAction_Enter()
@@ -496,6 +503,9 @@ namespace CommonwealthUpdater
             ChkGameFolder.IsChecked = UpdaterConfig.ConfigFields.PlacedInClientFolder;
             RemoteAddr.Text = UpdaterConfig.ConfigFields.DownloadAddress==null?"": UpdaterConfig.ConfigFields.DownloadAddress.ToString();
             ClientDestination.Text = UpdaterConfig.ConfigFields.ClientFolder==null?"": UpdaterConfig.ConfigFields.ClientFolder.LocalPath;
+
+            if (UpdaterConfig.ConfigFields.PlacedInClientFolder)
+                BtnSelect.IsEnabled = false;
 
             MainSelector.SelectedIndex = 1;
         }
@@ -824,7 +834,7 @@ namespace CommonwealthUpdater
 
                 Loader loader = new Loader
                 {
-                    RemoteAddr = UpdaterConfig.ConfigFields.DownloadAddress
+                    RemoteAddr = new UriBuilder("http", UpdaterConfig.ConfigFields.DownloadAddress.Host, 9000).Uri
                 };
 
                 updater = new L2Updater(loader, UpdaterConfig);
@@ -867,7 +877,7 @@ namespace CommonwealthUpdater
 
                 updater = new L2Updater(loader, UpdaterConfig);
                 updater.ClientCheckUpdate += FullCheckActionProgress;
-                updater.ClientCheckFinished += FullClientCheckFinish;
+                updater.ClientCheckFinished += FullClientUpdateFinished;
                 updater.ClientCheckError += FullClientCheckError;
                 loader.LoaderProgress += FullClientLoadUpdate;
                 loader.UnZipProgress += FullLoadFileExtractProgress;
@@ -979,12 +989,19 @@ namespace CommonwealthUpdater
         #endregion
 
         #region AboutTab
-        private void HyperLicense_Click(object sender, RoutedEventArgs e)
+
+        private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
         {
+            Process runbrowser = new Process();
+            runbrowser.StartInfo.UseShellExecute = true;
+            runbrowser.StartInfo.FileName = e.Uri.AbsoluteUri;
 
+            runbrowser.Start();
+
+            e.Handled = true;
         }
-        #endregion
 
+        #endregion
     }
 
 }

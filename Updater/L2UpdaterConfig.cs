@@ -4,6 +4,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.IO;
+using System.Reflection;
+using System.Diagnostics;
 
 namespace Config
 {
@@ -23,7 +25,7 @@ namespace Config
         {
             public Uri DownloadAddress { get; set; } = new Uri("http://l2-update.gudilap.ru");
             public Uri ClientFolder { 
-                get => PlacedInClientFolder ? new Uri(AppDomain.CurrentDomain.BaseDirectory) : _ClientFolder;
+                get => PlacedInClientFolder ? new Uri(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)) : _ClientFolder;
                 set { _ClientFolder = value; }
             }
             public bool PlacedInClientFolder { get; set; } = false;
@@ -55,6 +57,8 @@ namespace Config
                 if (!Directory.Exists(LocalWorkingFolder))
                     Directory.CreateDirectory(LocalWorkingFolder);
             }
+
+//            string ss = Assembly.GetEntryAssembly().CodeBase;
         }
 
         public async void Read()

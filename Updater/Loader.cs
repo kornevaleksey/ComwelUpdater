@@ -109,6 +109,7 @@ namespace Updater
             zipreader.MoveToNextEntry();
             await Task.Run(() => zipreader.WriteEntryTo(streamlocalfile), token);
 
+
             logger.Info("File loaded");
         }
 

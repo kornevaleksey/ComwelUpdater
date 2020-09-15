@@ -229,7 +229,7 @@
                             <TextBlock Grid.Row="1" Grid.RowSpan="5" Grid.Column="1" Grid.ColumnSpan="2" FontSize="12" TextWrapping="Wrap" Margin="5">
                                 <Run FontSize="16" Text="Lineage II Commonwealth Launcher"/>
                                 <LineBreak/>
-                                <Run FontSize="14" Text="Версия 0.7 6 сентября 2020 г"/>
+                                <Run x:Name="txtbVersionInfo" FontSize="14" Text="Версия 0.8 15 сентября 2020 г"/>
                                 <LineBreak/>
                                 <Run Text="Copyright (c) Korall"/>
                                 <LineBreak/>
@@ -241,13 +241,13 @@
                                     <Run Text="wfmo" ToolTip="Советы по разработке, тестирование"/>
                                 <LineBreak/>
                                 <Run Text="Использованные компоненты:"/>
-                                    <Hyperlink NavigateUri="https://nlog-project.org/">NLog</Hyperlink>, 
-                                    <Hyperlink NavigateUri="http://www.ookii.org/software/dialogs/">Ookii.Dialogs</Hyperlink>,
-                                    <Hyperlink NavigateUri="https://github.com/adamhathcock/sharpcompress">SharpCompress</Hyperlink>
+                                    <Hyperlink NavigateUri="https://nlog-project.org/" RequestNavigate="Hyperlink_RequestNavigate">NLog</Hyperlink>, 
+                                    <Hyperlink NavigateUri="http://www.ookii.org/software/dialogs/" RequestNavigate="Hyperlink_RequestNavigate">Ookii.Dialogs</Hyperlink>,
+                                    <Hyperlink NavigateUri="https://github.com/adamhathcock/sharpcompress" RequestNavigate="Hyperlink_RequestNavigate">SharpCompress</Hyperlink>
                                 <LineBreak/>
-                                <Hyperlink NavigateUri="www.gudilap.ru/l2launcher_license.txt" RequestNavigate="HyperLicense_Click">Лицензия на использование</Hyperlink>
+                                <Hyperlink NavigateUri="http://l2-update.gudilap.ru/license.txt" RequestNavigate="Hyperlink_RequestNavigate">Лицензия на использование</Hyperlink>
                                 <LineBreak/>
-                                <Hyperlink NavigateUri="www.gudilap.ru/l2launcher" RequestNavigate="HyperLicense_Click">Сайт программы</Hyperlink>
+                                <Hyperlink NavigateUri="http://l2-update.gudilap.ru" RequestNavigate="Hyperlink_RequestNavigate">Сайт программы</Hyperlink>
                             </TextBlock>
                         </Grid>
                     </TabItem.Content>

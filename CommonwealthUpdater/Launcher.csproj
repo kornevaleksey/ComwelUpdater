@@ -7,17 +7,30 @@
     <CefSharpAnyCpuSupport>true</CefSharpAnyCpuSupport>
     <SignAssembly>false</SignAssembly>
     <ApplicationIcon>icons\favicon.ico</ApplicationIcon>
-    <Version>0.7.0</Version>
+    <Version>0.8.0</Version>
     <Copyright>Korall</Copyright>
-    <PackageLicenseFile>license.txt</PackageLicenseFile>
+    <PackageLicenseFile></PackageLicenseFile>
     <PackageIcon>favicon2.ico</PackageIcon>
     <AssemblyOriginatorKeyFile>korall.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
+    <PackageProjectUrl>l2-update.gudilap.ru</PackageProjectUrl>
+    <Authors>Korall</Authors>
+    <Product>Lineage II Commonwealth Launcher</Product>
+    <PackageLicenseExpression>Copyright © $([System.DateTime]::UtcNow.Year) Korall ($([System.DateTime]::UtcNow.ToString("s")))</PackageLicenseExpression>
+    <AssemblyVersion>0.8</AssemblyVersion>
+    <FileVersion>0.8</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="images\**" />
+    <EmbeddedResource Remove="images\**" />
+    <None Remove="images\**" />
+    <Page Remove="images\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="imagesbeauty\check.png" />
@@ -28,21 +41,6 @@
     <None Remove="imagesbeauty\x.png" />
     <None Remove="imagesbeauty\_.png" />
     <None Remove="imagesbeauty\_.svg" />
-    <None Remove="images\close.gif" />
-    <None Remove="images\flag_square.png" />
-    <None Remove="images\info.png" />
-    <None Remove="images\l2.png" />
-    <None Remove="images\minimize.gif" />
-    <None Remove="images\recheck.png" />
-    <None Remove="images\settings.png" />
-    <None Include="..\license.txt">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-    <None Include="icons\favicon2.ico">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -82,11 +80,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="LauncherRes.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>LauncherRes.resx</DependentUpon>
-    </Compile>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -95,10 +88,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Update="LauncherRes.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>LauncherRes.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
     <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -112,10 +101,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Resources\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Resource Include="imagesbeauty\check.png" />
     <Resource Include="imagesbeauty\gudilap.png" />
     <Resource Include="imagesbeauty\settings.png" />
@@ -124,21 +109,14 @@
     <Resource Include="imagesbeauty\x.png" />
     <Resource Include="imagesbeauty\_.png" />
     <Resource Include="imagesbeauty\_.svg" />
-    <Resource Include="images\close.gif">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="images\flag_square.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="images\info.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="images\l2.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="images\minimize.gif" />
-    <Resource Include="images\recheck.png" />
-    <Resource Include="images\settings.png" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="echo %25date%25 &gt; &quot;$(ProjectDir)\Resources\BuildDate.txt&quot;" />
+  </Target>
 
 </Project>

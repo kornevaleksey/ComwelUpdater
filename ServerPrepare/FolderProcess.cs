@@ -61,7 +61,7 @@ namespace ServerPrepare
 
                 await CompressFileAsync(sourcefile, destfile);
  
-            }, 4);
+            }, 6);
         }
 
         public async Task<ClientFileInfo> GetFileInfo(string filename, string sourcepath, string compressedpath)
