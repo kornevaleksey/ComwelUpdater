@@ -9,6 +9,7 @@
         Title="Lineage II Commonwealth Client Updater" 
         Width="460" Height="370" WindowStyle="None" 
         AllowsTransparency="True" Background="Transparent"
+    Closed="updaterwindow_Closed"
         ResizeMode="NoResize" ShowActivated="False">
         
     <Window.Resources>
@@ -32,7 +33,7 @@
         </Style>
     </Window.Resources>
 
-    <Border BorderThickness="0" BorderBrush="Transparent" CornerRadius="5">
+    <Border BorderThickness="1" BorderBrush="Black" CornerRadius="5">
 
         <Grid x:Name="grid" MouseDown="MainGrid_MouseDown">
             <Grid.ColumnDefinitions>

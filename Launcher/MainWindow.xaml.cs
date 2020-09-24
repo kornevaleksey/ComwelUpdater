@@ -32,6 +32,7 @@ namespace CommonwealthUpdater
 
         CancellationTokenSource updaterCancellationTokenSource;
         CancellationTokenSource fullcheckCancellationTokenSource;
+        Mutex MutexLauncherRunning, MutexClientDirectory;
 
         public enum LauncherActions
         {
@@ -151,16 +152,12 @@ namespace CommonwealthUpdater
                                 CheckFilesFast_Enter();
                                 _LauncherStatus = value;
                                 break;
-                            case LauncherActions.Lineage2Run:
-                                CheckFilesFast_Exit();
-                                Lineage2Run_Enter();
-                                _LauncherStatus = value;
-                                break;
                             case LauncherActions.ConfigNotSet:
                                 CheckFilesFast_Exit();
                                 ConfigNotSet_Enter();
                                 _LauncherStatus = value;
                                 break;
+                            case LauncherActions.Lineage2Run:
                             case LauncherActions.CheckFilesFull:
                             case LauncherActions.UpdateFilesFull:
                             case LauncherActions.UpdateFiles:
@@ -271,6 +268,8 @@ namespace CommonwealthUpdater
             }
         }
 
+        string runningmutexname = "CommonwealthClientUpdaterMutex";
+
         LauncherActions _LauncherStatus;
 
         public MainWindow()
@@ -280,11 +279,20 @@ namespace CommonwealthUpdater
 
             logger.Info("Start work");
 
-           
+            UpdaterConfig = new L2UpdaterConfig();
+
+            bool mutexnew;
+            MutexLauncherRunning = new Mutex(false, runningmutexname, out mutexnew);
+            if (mutexnew==false)
+            {
+                MutexClientDirectory = new Mutex(false, runningmutexname + UpdaterConfig.ConfigFields.ClientFolder.LocalPath, out mutexnew);
+                if (mutexnew == false)
+                    this.Close();
+            }
+
             var version = FileVersionInfo.GetVersionInfo(Assembly.GetEntryAssembly().Location);
             version = FileVersionInfo.GetVersionInfo(Process.GetCurrentProcess().MainModule.FileName);
 
-            UpdaterConfig = new L2UpdaterConfig();
 
             InitializeComponent();
 
@@ -293,6 +301,13 @@ namespace CommonwealthUpdater
             UpdaterConfig.Read();
 
             txtbVersionInfo.Text = String.Format("Версия {0} от {1} © Korall", Assembly.GetEntryAssembly().GetName().Version, Launcher.Properties.Resources.BuildDate.Trim());
+
+            Timer runninglineage2 = new Timer((object stateinfo) =>
+            {
+                if (SearchForRunningLineageProcess())
+                    LauncherStatus = LauncherActions.Lineage2Run;
+            });
+            runninglineage2.Change(0, 100);
         }
 
         private void WaitForAction_Enter()
@@ -389,7 +404,10 @@ namespace CommonwealthUpdater
 
         private bool Lineage2Run_Exit()
         {
-            return true;
+            if (SearchForRunningLineageProcess())
+                return false;
+            else
+                return true;
         }
 
         private void CheckFilesFull_Enter()
@@ -858,9 +876,8 @@ namespace CommonwealthUpdater
             }
             else if (LauncherStatus == LauncherActions.CheckFilesFull)
             {
-                LauncherStatus = LauncherActions.WaitForAction;
-
                 fullcheckCancellationTokenSource.Cancel();
+                LauncherStatus = LauncherActions.WaitForAction;
             }
         }
 
@@ -1002,6 +1019,22 @@ namespace CommonwealthUpdater
         }
 
         #endregion
+
+        private void updaterwindow_Closed(object sender, EventArgs e)
+        {
+        }
+
+        private bool SearchForRunningLineageProcess ()
+        {
+            /*
+            Process[] l2processes = Process.GetProcessesByName("l2").Where(p => p. MainModule.FileName.Equals(UpdaterConfig.ClientExeFile)).ToArray();
+            if (l2processes.Length > 0)
+                return true;
+            else
+                return false;
+            */
+            return false;
+        }
     }
 
 }

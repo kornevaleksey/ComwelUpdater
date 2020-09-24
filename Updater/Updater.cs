@@ -115,9 +115,11 @@ namespace Updater
                 ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Получена информация о игре с сервера" });
 
                 await localClient.CreateModelFromDirectory(config.ConfigFields.ClientFolder, token, true);
+                if (token.IsCancellationRequested) return;
                 await localClient.WriteClientModel(config.LocalInfoFile);
                 ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Собрана полная информация о файлах игры" });
 
+                if (token.IsCancellationRequested) return;
                 Difference = CompareModels(localClient, remoteClient);
 
                 string msg = Difference.Count > 0 ? "Необходимо обновление" : "Файлы игры проверены";
