@@ -13,8 +13,11 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using Updater;
 using Ookii.Dialogs.Wpf;
+using ServerPrepare.FilesInfo;
+using ServerPrepare.Configuration;
+using ServerPrepare.Process;
+using System.IO.Packaging;
 
 namespace ServerPrepare
 {
@@ -23,14 +26,15 @@ namespace ServerPrepare
     /// </summary>
     public partial class MainWindow : Window
     {
-        PrepareSettings Settings;
-        SourceConfig sourcefolderconfig;
-        ServerConfig serverfolderconfig;
+        readonly PrepareSettings Settings;
+        SourceFolder sourcefolderconfig;
+        ServerFolder serverfolderconfig;
 
         public MainWindow()
         {
             Settings = new PrepareSettings();
             InitializeComponent();
+
         }
 
         private void SelectSourceFolder_Click(object sender, RoutedEventArgs e)
@@ -47,7 +51,7 @@ namespace ServerPrepare
             }
         }
 
-        private void TreeUpdateSource (SourceConfig fconfig, TreeView treeview)
+        private void TreeUpdateSource (SourceFolder fconfig, TreeView treeview)
         {
             treeview.Items.Clear();
             List<string> toplevel = Directory.GetDirectories(fconfig.ClientFolder).ToList();
@@ -66,7 +70,7 @@ namespace ServerPrepare
 
                 foreach (string file in files)
                 {
-                    IL2FileInfo info = fconfig.FileInfos?.Find(inf => String.Compare(inf.FileName, System.IO.Path.GetRelativePath(dir, file), true) == 0);
+                    SourceFileInfo info = fconfig.FileInfos?.Find(inf => String.Compare(inf.FileName, System.IO.Path.GetRelativePath(dir, file), true) == 0);
 
                     StackPanel addpanel = new StackPanel()
                     {
@@ -97,7 +101,7 @@ namespace ServerPrepare
             }
         }
 
-        private void TreeUpdateServer(ServerConfig fconfig, TreeView treeview)
+        private void TreeUpdateServer(ServerFolder fconfig, TreeView treeview)
         {
             treeview.Items.Clear();
             List<string> toplevel = Directory.GetDirectories(fconfig.ClientFolder).ToList();
@@ -116,17 +120,14 @@ namespace ServerPrepare
 
                 foreach (string file in files)
                 {
-                    IL2FileInfo info = fconfig.FileInfos?.Find(inf => String.Compare(inf.FileName, System.IO.Path.GetRelativePath(dir, file), true) == 0);
+                    //SourceFileInfo info = fconfig.FileInfos?.Find(inf => String.Compare(inf.FileName, System.IO.Path.GetRelativePath(dir, file), true) == 0);
 
                     StackPanel addpanel = new StackPanel();
                     TextBlock tbFileName = new TextBlock()
                     {
                         Text = System.IO.Path.GetRelativePath(fconfig.ClientFolder, dir)
                     };
-                    TextBlock tbImportant = new TextBlock()
-                    {
-                        Text = info != null ? info.Important.ToString() : ""
-                    };
+
 
                     item.Items.Add(new TreeViewItem()
                     {
@@ -151,40 +152,47 @@ namespace ServerPrepare
             }
         }
 
-        private async void ProcessFiles_Click(object sender, RoutedEventArgs e)
+        private void CompressFiles_Click(object sender, RoutedEventArgs e)
         {
-            FolderProcess folderProcess = new FolderProcess(SourceFolder.Text, ServerFolder.Text);
-            folderProcess.ProgressUpdate += ProcessActionProgress;
-            await folderProcess.StartCompress();
+            sourcefolderconfig.CompressProgress = CompressProgress;
+            sourcefolderconfig.FinishCompress = CompressFinish;
+            sourcefolderconfig.StartCompress(serverfolderconfig);
         }
 
-        private void ProcessActionProgress(object sender, FolderProgressEventArgs args)
+        private void CompressProgress(double progress, string message)
         {
             Dispatcher.BeginInvoke((Action)delegate ()
             {
-                InfoProgress.Maximum = args.ProgressMax;
-                InfoProgress.Value = args.ProgressValue;
-                InfoStr.Text = args.InfoStr;
-                InfoStr.Foreground = new SolidColorBrush(Color.FromArgb(args.InfoStrColor.A, args.InfoStrColor.R, args.InfoStrColor.G, args.InfoStrColor.B));
+                InfoProgress.Value = progress;
+                InfoStr.Text = message;
+                InfoStr.Foreground = Brushes.Black;
             });
         }
 
-        private async void HashFiles_Click(object sender, RoutedEventArgs e)
+        private void CompressFinish()
         {
-            FolderProcess folderProcess = new FolderProcess(SourceFolder.Text, ServerFolder.Text);
-            folderProcess.ProgressUpdate += ProcessActionProgress;
-            await folderProcess.StartModel();
+            Dispatcher.BeginInvoke((Action)delegate ()
+            {
+                InfoProgress.Value = 100;
+                InfoStr.Text = String.Format("Сжатие исходных файлов завершено");
+                InfoStr.Foreground = Brushes.Black;
+            });
+        }
+
+        private void HashFiles_Click(object sender, RoutedEventArgs e)
+        {
+            serverfolderconfig.StartModel(sourcefolderconfig);
         }
 
         private void Window_Initialized(object sender, EventArgs e)
         {
             Task.Run( async () =>
             {
-                await Settings.ReadSettings();
-                sourcefolderconfig = new SourceConfig(Settings.SourceFolder);
-                serverfolderconfig = new ServerConfig(Settings.ServerFolder);
+                Settings.ReadSettings();
+                sourcefolderconfig = new SourceFolder(Settings.SourceFolder);
+                serverfolderconfig = new ServerFolder(Settings.ServerFolder);
                 await sourcefolderconfig.ReadInfo();
-                await serverfolderconfig.ReadInfo();
+                //await serverfolderconfig.ReadInfo();
                 Dispatcher.Invoke(() =>
                 {
                     SourceFolder.Text = Settings.SourceFolder.LocalPath;
@@ -197,7 +205,7 @@ namespace ServerPrepare
         {
             Settings.SourceFolder = new Uri(SourceFolder.Text);
             Settings.SaveSettings();
-            sourcefolderconfig = new SourceConfig(Settings.SourceFolder);
+            sourcefolderconfig = new SourceFolder(Settings.SourceFolder);
             TreeUpdateSource(sourcefolderconfig, TreeSourceFiles);
         }
 
@@ -205,7 +213,7 @@ namespace ServerPrepare
         {
             Settings.ServerFolder = new Uri(ServerFolder.Text);
             Settings.SaveSettings();
-            serverfolderconfig = new ServerConfig(Settings.ServerFolder);
+            serverfolderconfig = new ServerFolder(Settings.ServerFolder);
             TreeUpdateServer(serverfolderconfig, TreeServerFiles);
         }
 
@@ -227,6 +235,11 @@ namespace ServerPrepare
                 await sourcefolderconfig.CreateInfo();
                 await sourcefolderconfig.WriteInfo();
             });
+
+        }
+
+        private void CreatePatch_Click(object sender, RoutedEventArgs e)
+        {
 
         }
     }

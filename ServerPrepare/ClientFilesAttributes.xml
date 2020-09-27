@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<!DOCTYPE ClientFilesAttributes>
+
+<ClientFilesAttributes>
+	<AllowUserEdit>
+		<File>system/user.ini</File>
+		<File>system/chatfilter.ini</File>
+		<File>system/Option.ini</File>
+		<File>system/WindowsInfo.ini</File>
+		<File>system/s_info.ini</File>
+		<File>system/L2CompiledShader.bin</File>
+	</AllowUserEdit>
+	<ImportantFiles>
+		<File>system/l2.exe</File>
+		<File>system/l2.bin</File>
+		<File>system/ALAudio.dll</File>
+		<File>system/aswor.dll</File>
+		<File>system/beecrypt.dll</File>
+		<File>system/Core.dll</File>
+		<File>system/D3DDrv.dll</File>
+		<File>system/defopenal32.dll</File>
+		<File>system/Dpst.dll</File>
+		<File>system/dsetup.dll</File>
+		<File>system/encvag.dll</File>
+		<File>system/Engine.dll</File>
+		<File>system/entry.dll</File>
+		<File>system/fire.dll</File>
+		<File>system/fmodex.dll</File>
+		<File>system/gameShieldDll.dll</File>
+		<File>system/IFC23.dll</File>
+		<File>system/IpDrv.dll</File>
+		<File>system/libgmp-10.dll</File>
+		<File>system/libz-1.dll</File>
+		<File>system/LineageCreature.dll</File>
+		<File>system/msxml4.dll</File>
+		<File>system/msxml4a.dll</File>
+		<File>system/msxml4r.dll</File>
+		<File>system/npkcrypt.dll</File>
+		<File>system/npkpdb..dll</File>
+		<File>system/NSplash.dll</File>
+		<File>system/nwindow.dll</File>
+		<File>system/ogg.dll</File>
+		<File>system/openal32.dll</File>
+		<File>system/Unichat.dll</File>
+		<File>system/vcomp.dll</File>
+		<File>system/vorbis.dll</File>
+		<File>system/vorbisfile.dll</File>
+		<File>system/Window.dll</File>
+		<File>system/WinDrv.dll</File>
+		<File>system/wrap_oal.dll</File>
+	</ImportantFiles>
+</ClientFilesAttributes>
