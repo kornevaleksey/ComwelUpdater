@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.Security.Cryptography;
 using System.Reflection;
 using System.Xml;
+using SharpCompress.Common;
+using SharpCompress.Writers;
 
 namespace ServerPrepare.FilesInfo
 {
@@ -86,7 +88,6 @@ namespace ServerPrepare.FilesInfo
         private static string FormatPath(string path)
         {
             string result = path.Replace("/", "\\");
-            char c = '\'';
             result = result.TrimStart('\'');
             return result;
         }
@@ -97,7 +98,7 @@ namespace ServerPrepare.FilesInfo
 
     public class FolderConfig
     {
-        public Uri Folder { get; }
+        public Uri Folder { get; set; }
         public string ClientFolder { get => Path.Combine(Folder.LocalPath, @"client\"); }
         public string InfoFolder { get => Path.Combine(Folder.LocalPath, @"info\"); }
         public virtual string InfoFile { get => Path.Combine(InfoFolder, "information.json"); }
@@ -116,6 +117,13 @@ namespace ServerPrepare.FilesInfo
                 Directory.CreateDirectory(InfoFolder);
             });
 
+        }
+
+        protected async Task CompressFileAsync(string sourcename, string destinationname)
+        {
+            using FileStream compressFileStream = File.Create(destinationname + ".zip");
+            using var compress_writer = WriterFactory.Open(compressFileStream, ArchiveType.Zip, CompressionType.LZMA);
+            await Task.Run(() => compress_writer.Write(Path.GetFileName(sourcename), sourcename));
         }
 
     }

@@ -13,10 +13,10 @@ namespace Config
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public string RemoteInfoFile { get => "info/clientinfo.inf"; }
+        public string RemoteInfoFile { get => "clientinfo.inf"; }
         public string LocalInfoFile { get => LocalWorkingFolder + "clientinfo.inf"; }
         public string ClientExeFile { get => ConfigFields.ClientFolder.LocalPath+"\\system\\l2.exe"; }
-        public string RemoteClientPath { get => "client/"; }
+        public string RemoteClientPath { get => ""; }
 
         public string ConfigFile { get => LocalWorkingFolder + "l2updater.json"; }
         private string LocalWorkingFolder { get => ConfigFields.PlacedInClientFolder? ConfigFields.ClientFolder.LocalPath:Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\ComwelUpdater\\"; }

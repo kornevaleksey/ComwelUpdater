@@ -186,26 +186,24 @@ namespace ServerPrepare
 
         private void Window_Initialized(object sender, EventArgs e)
         {
-            Task.Run( async () =>
+            Settings.ReadSettings();
+            sourcefolderconfig = new SourceFolder(Settings.SourceFolder);
+            serverfolderconfig = new ServerFolder(Settings.ServerFolder);
+            Task.Run(() =>
             {
-                Settings.ReadSettings();
-                sourcefolderconfig = new SourceFolder(Settings.SourceFolder);
-                serverfolderconfig = new ServerFolder(Settings.ServerFolder);
-                await sourcefolderconfig.ReadInfo();
-                //await serverfolderconfig.ReadInfo();
-                Dispatcher.Invoke(() =>
-                {
-                    SourceFolder.Text = Settings.SourceFolder.LocalPath;
-                    ServerFolder.Text = Settings.ServerFolder.LocalPath;
-                });
+                sourcefolderconfig.ReadInfo();
+                serverfolderconfig.ReadModel();
             });
+
+            SourceFolder.Text = Settings.SourceFolder.LocalPath;
+            ServerFolder.Text = Settings.ServerFolder.LocalPath;
         }
 
         private void SourceFolder_TextChanged(object sender, TextChangedEventArgs e)
         {
             Settings.SourceFolder = new Uri(SourceFolder.Text);
             Settings.SaveSettings();
-            sourcefolderconfig = new SourceFolder(Settings.SourceFolder);
+            sourcefolderconfig.Folder = Settings.SourceFolder;
             TreeUpdateSource(sourcefolderconfig, TreeSourceFiles);
         }
 
@@ -213,7 +211,7 @@ namespace ServerPrepare
         {
             Settings.ServerFolder = new Uri(ServerFolder.Text);
             Settings.SaveSettings();
-            serverfolderconfig = new ServerFolder(Settings.ServerFolder);
+            serverfolderconfig.Folder = Settings.ServerFolder;
             TreeUpdateServer(serverfolderconfig, TreeServerFiles);
         }
 
@@ -240,7 +238,7 @@ namespace ServerPrepare
 
         private void CreatePatch_Click(object sender, RoutedEventArgs e)
         {
-
+            serverfolderconfig.CreatePatch(sourcefolderconfig);
         }
     }
 }

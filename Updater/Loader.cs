@@ -23,6 +23,7 @@ namespace Updater
         public static HttpClient httpClient;
 
         public Uri RemoteAddr { get; set; }// { get=>httpClient.BaseAddress; set=>httpClient.BaseAddress = value; }
+        public Uri RemoteInfoAddr { get; set; }
 
         public event EventHandler<LoaderProgressEventArgs> LoaderProgress;
         public event EventHandler<LoaderUnZipProgressEventArgs> UnZipProgress;
@@ -85,6 +86,37 @@ namespace Updater
         public async Task DownloadFile (string remoteRelativePath, string localFileName, CancellationToken token)
         {
             UriBuilder uriBuilder = new UriBuilder(RemoteAddr)
+            {
+                Path = remoteRelativePath + ".zip"
+            };
+            loadfilename = uriBuilder.Uri.ToString();
+
+            logger.Info("Download file {0} into local file {1}", uriBuilder.ToString(), localFileName);
+
+
+            if (Directory.Exists(new FileInfo(localFileName).Directory.FullName) == false)
+            {
+                logger.Info("Creating directory {0}", new FileInfo(localFileName).Directory.FullName);
+                Directory.CreateDirectory(new FileInfo(localFileName).Directory.FullName);
+            }
+
+            using var streamlocalfile = File.Create(localFileName);
+            using var streamresp = httpClient.GetStreamAsync(uriBuilder.Uri);
+            using var zipreader = ReaderFactory.Open(await streamresp);
+            stream = streamlocalfile;
+            this.token = token;
+
+            zipreader.EntryExtractionProgress += ExtractionProgress;
+            zipreader.MoveToNextEntry();
+            await Task.Run(() => zipreader.WriteEntryTo(streamlocalfile), token);
+
+
+            logger.Info("File loaded");
+        }
+
+        public async Task DownloadInfoFile(string remoteRelativePath, string localFileName, CancellationToken token)
+        {
+            UriBuilder uriBuilder = new UriBuilder(RemoteInfoAddr)
             {
                 Path = remoteRelativePath + ".zip"
             };

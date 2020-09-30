@@ -7,8 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Dasync.Collections;
 using ServerPrepare.FilesInfo;
-using SharpCompress.Common;
-using SharpCompress.Writers;
+
 
 namespace ServerPrepare.Process
 {
@@ -49,7 +48,7 @@ namespace ServerPrepare.Process
                 string relpath = Path.GetRelativePath(this.ClientFolder, sourcefile);
                 string destfile = Path.Combine(serverfolder.ClientFolder, relpath);
 
-                CompressProgress?.Invoke(100.0 * fcount / index, String.Format("Сжатие файла {0}", sourcefile));
+                CompressProgress?.Invoke(100.0 * index/fcount, String.Format("Сжатие файла {0}", sourcefile));
 
                 await CompressFileAsync(sourcefile, destfile);
 
@@ -58,14 +57,23 @@ namespace ServerPrepare.Process
             FinishCompress?.Invoke();
         }
 
-        private async Task CompressFileAsync(string sourcename, string destinationname)
+        public async Task CompressFilesList (List<SourceFileInfo> files, string destination)
         {
-            using FileStream compressFileStream = File.Create(destinationname + ".zip");
-            using var compress_writer = WriterFactory.Open(compressFileStream, ArchiveType.Zip, CompressionType.LZMA);
-            await Task.Run(() => compress_writer.Write(Path.GetFileName(sourcename), sourcename));
+            List<string> compressfiles = files.Select(s => Path.Combine(this.ClientFolder, s.FileName)).ToList();
+
+            await compressfiles.ParallelForEachAsync(async (sourcefile, index) =>
+            {
+                string relpath = Path.GetRelativePath(this.ClientFolder, sourcefile);
+                string destfile = Path.Combine(destination, relpath);
+
+                CompressProgress?.Invoke(100.0 * compressfiles.Count / index, String.Format("Сжатие файла {0}", sourcefile));
+
+                await CompressFileAsync(sourcefile, destfile);
+
+            }, 4);
         }
 
-        public async Task ReadInfo()
+        public async void ReadInfo()
         {
             if (File.Exists(InfoFile))
             {

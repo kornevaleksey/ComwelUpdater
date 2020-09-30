@@ -32,7 +32,7 @@ namespace CommonwealthUpdater
 
         CancellationTokenSource updaterCancellationTokenSource;
         CancellationTokenSource fullcheckCancellationTokenSource;
-        Mutex MutexLauncherRunning, MutexClientDirectory;
+        readonly Mutex MutexLauncherRunning, MutexClientDirectory;
 
         public enum LauncherActions
         {
@@ -489,7 +489,11 @@ namespace CommonwealthUpdater
 
                 UpdateL2.IsEnabled = false;
 
-                Loader loader = new Loader();
+                Loader loader = new Loader
+                {
+                    RemoteAddr = new UriBuilder("http", UpdaterConfig.ConfigFields.DownloadAddress.Host, 9000).Uri,
+                    RemoteInfoAddr = new UriBuilder("https", UpdaterConfig.ConfigFields.DownloadAddress.Host, 9001).Uri
+                };
                 updater = new L2Updater(loader, UpdaterConfig);
                 UpdateL2.Tag = updater;
 
@@ -498,7 +502,7 @@ namespace CommonwealthUpdater
                 updater.ClientCheckError += ClientCheckError;
                 loader.LoaderProgress += ClientLoadUpdate;
                 loader.UnZipProgress += LoadFileExtractProgress;
-                loader.RemoteAddr = new UriBuilder ("http", UpdaterConfig.ConfigFields.DownloadAddress.Host, 9000).Uri;
+                
 
                 InfoBlock.Text = "Проверка клиента игры Lineage II";
 
@@ -852,7 +856,8 @@ namespace CommonwealthUpdater
 
                 Loader loader = new Loader
                 {
-                    RemoteAddr = new UriBuilder("http", UpdaterConfig.ConfigFields.DownloadAddress.Host, 9000).Uri
+                    RemoteAddr = new UriBuilder("http", UpdaterConfig.ConfigFields.DownloadAddress.Host, 9000).Uri,
+                    RemoteInfoAddr = new UriBuilder("http", UpdaterConfig.ConfigFields.DownloadAddress.Host, 9001).Uri,
                 };
 
                 updater = new L2Updater(loader, UpdaterConfig);
@@ -889,7 +894,8 @@ namespace CommonwealthUpdater
 
                 Loader loader = new Loader
                 {
-                    RemoteAddr = new UriBuilder("http", UpdaterConfig.ConfigFields.DownloadAddress.Host, 9000).Uri
+                    RemoteAddr = new UriBuilder("http", UpdaterConfig.ConfigFields.DownloadAddress.Host, 9000).Uri,
+                    RemoteInfoAddr = new UriBuilder("https", UpdaterConfig.ConfigFields.DownloadAddress.Host, 9001).Uri
                 };
 
                 updater = new L2Updater(loader, UpdaterConfig);

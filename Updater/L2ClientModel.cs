@@ -171,7 +171,7 @@ namespace Updater
 
             try
             {
-                await loader.DownloadFile(remoteModelAddr, temporary_file, new CancellationTokenSource().Token);
+                await loader.DownloadInfoFile(remoteModelAddr, temporary_file, new CancellationTokenSource().Token);
                 await ReadClientModel(temporary_file);
             }
             finally
