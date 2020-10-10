@@ -14,6 +14,7 @@
 	<ImportantFiles>
 		<File>system/l2.exe</File>
 		<File>system/l2.bin</File>
+		<File>system/l2.ini</File>
 		<File>system/ALAudio.dll</File>
 		<File>system/aswor.dll</File>
 		<File>system/beecrypt.dll</File>

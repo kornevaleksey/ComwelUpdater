@@ -35,7 +35,7 @@ namespace ServerPrepare.FilesInfo
                 l2fileinfo.UserChangeAllow = true;
 
             if (DefaultFilesInfo.ImportantFileNames.FindIndex(n => n.Equals(relativepath, StringComparison.OrdinalIgnoreCase)) >= 0)
-                l2fileinfo.UserChangeAllow = true;
+                l2fileinfo.Important = true;
 
             FileInfo inf = new FileInfo(filename);
             l2fileinfo.LastChange = inf.LastWriteTimeUtc;

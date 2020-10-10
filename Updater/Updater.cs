@@ -48,15 +48,16 @@ namespace Updater
 
             try
             {
+                ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Получаю информацию об игре с сервера" });
+                await remoteClient.LoadRemoteModel(config.RemoteInfoFile);
+                ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Получена информация об игре с сервера" });
+
                 await cacheClient.ReadClientModel(config.LocalInfoFile);
                 ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Считана сохраненная информация о файлах игры" });
 
                 await localClient.CreateModelFromDirectory(config.ConfigFields.ClientFolder, new CancellationTokenSource().Token);
+                await localClient.CalculateHashesofImportantFiles(config.ConfigFields.ClientFolder, remoteClient, new CancellationTokenSource().Token);
                 ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Собрана сокращённая информация о файлах игры" });
-
-                ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Получаю информацию об игре с сервера" });
-                await remoteClient.LoadRemoteModel(config.RemoteInfoFile);
-                ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Получена информация об игре с сервера" });
 
                 //Compare cached model to remote
                 Difference = CompareModels(localClient, remoteClient, cacheClient);

@@ -154,6 +154,25 @@ namespace Updater
             ClientInfo.ClientSize += ClientInfo.FilesInfo.Sum(ci => ci.FileSize);
         }
 
+        public async Task CalculateHashesofImportantFiles(Uri localDir, L2ClientRemote clientRemote, CancellationToken token)
+        {
+            List<ClientFileInfo> important_files = clientRemote.ClientInfo.FilesInfo.Where(info => info.ImportantFile).ToList();
+
+            foreach (ClientFileInfo fileinfo in important_files)
+            {
+                if (token.IsCancellationRequested)
+                    return;
+
+                int index = ClientInfo.FilesInfo.FindIndex(f => f.FileName.Equals(fileinfo.FileName));
+                if (index>=0)
+                {
+                    string path_to_local_file = Path.Combine(localDir.LocalPath, ClientInfo.FilesInfo[index].FileName);
+                    ClientFileInfo local_hash = await Checker.GetFileInfo(path_to_local_file, true);
+                    ClientInfo.FilesInfo[index].Hash = local_hash.Hash;
+                }
+            }
+        }
+
     }
 
     public class L2ClientRemote : L2ClientBase

@@ -86,16 +86,28 @@ namespace Updater
                 return false;
             if (remoteinfo.AllowLocalChange == true)
                 return true;
-            if (cachedinfo==null)
+
+            if (remoteinfo.ImportantFile == true)
             {
-                if (localinfo.FileSize == remoteinfo.FileSize)
-                    //if ((localinfo.Changed - remoteinfo.Changed) < new TimeSpan(0, 5, 0))
-                        ret = true;
-            } else
+                if (remoteinfo.Hash.SequenceEqual(localinfo.Hash))
+                {
+                    ret = true;
+                }
+            }
+            else
             {
-                if (cachedinfo.Hash.SequenceEqual(remoteinfo.Hash))
-                    if (remoteinfo.FileSize == localinfo.FileSize)
+                if (cachedinfo == null)
+                {
+                    if (localinfo.FileSize == remoteinfo.FileSize)
+                        //if ((localinfo.Changed - remoteinfo.Changed) < new TimeSpan(0, 5, 0))
                         ret = true;
+                }
+                else
+                {
+                    if (cachedinfo.Hash.SequenceEqual(remoteinfo.Hash))
+                        if (remoteinfo.FileSize == localinfo.FileSize)
+                            ret = true;
+                }
             }
             return ret;
         }
