@@ -183,30 +183,25 @@ namespace Updater
                         FileInfo loaded_info = new FileInfo(local_filename);
                         downloadspeed = loaded_info.Length / timeSpan.TotalSeconds;
 
-                        if (loaded_info.Length == clientFileInfo.FileSize)
+                        ClientFileInfo loaded_file_info = await checker.GetFileInfo(local_filename, true);
+                        if (clientFileInfo.Hash.SequenceEqual(loaded_file_info.Hash))
                         {
-                            ClientFileInfo loaded_file_info = await checker.GetFileInfo(local_filename, true);
-                            if (clientFileInfo.Hash.SequenceEqual(loaded_file_info.Hash))
-                            {
-                                //new FileInfo(local_filename).LastWriteTimeUtc = clientFileInfo.Changed;
-                                file_ok = true;
-                            }
+                            file_ok = true;
                         }
+                        tries++;
                     }
                     finally
                     {
-
                     }
-
-                    tries++;
                 }
-
-                downloadsize += clientFileInfo.FileSize;
 
                 if (file_ok==false)
                 {
                     logger.Info(String.Format("File {0} download error", local_filename));
                     failed_loads.Add(clientFileInfo);
+                } else
+                {
+                    downloadsize += clientFileInfo.FileSize;
                 }
             }
 

@@ -40,7 +40,8 @@ namespace Updater
 
             if (complete)
             {
-                byte[] hash = await Task.Run(() => sha256.ComputeHash(File.OpenRead(filename)));
+                using FileStream hashcalcstream = File.OpenRead(filename);
+                byte[] hash = await Task.Run(() => sha256.ComputeHash(hashcalcstream));
                 clientFileInfo.Hash = new byte[hash.Length];
                 hash.CopyTo(clientFileInfo.Hash, 0);
             }

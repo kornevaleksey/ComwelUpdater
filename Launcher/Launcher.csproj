@@ -5,7 +5,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
     <CefSharpAnyCpuSupport>true</CefSharpAnyCpuSupport>
-    <SignAssembly>false</SignAssembly>
+    <SignAssembly>true</SignAssembly>
     <ApplicationIcon>icons\favicon.ico</ApplicationIcon>
     <Version>0.8.0</Version>
     <Copyright>Korall</Copyright>

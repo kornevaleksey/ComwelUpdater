@@ -281,6 +281,7 @@ namespace CommonwealthUpdater
 
             UpdaterConfig = new L2UpdaterConfig();
 
+            /*
             bool mutexnew;
             MutexLauncherRunning = new Mutex(false, runningmutexname, out mutexnew);
             if (mutexnew==false)
@@ -289,6 +290,7 @@ namespace CommonwealthUpdater
                 if (mutexnew == false)
                     this.Close();
             }
+            */
 
             var version = FileVersionInfo.GetVersionInfo(Assembly.GetEntryAssembly().Location);
             version = FileVersionInfo.GetVersionInfo(Process.GetCurrentProcess().MainModule.FileName);
