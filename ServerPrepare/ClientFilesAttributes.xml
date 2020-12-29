@@ -50,5 +50,6 @@
 		<File>system/Window.dll</File>
 		<File>system/WinDrv.dll</File>
 		<File>system/wrap_oal.dll</File>
+    <File>system/etcitemgrp.dat</File>
 	</ImportantFiles>
 </ClientFilesAttributes>

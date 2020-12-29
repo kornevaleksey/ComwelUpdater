@@ -46,7 +46,7 @@ namespace ServerPrepare.Process
             var serlist = JsonSerializer.Serialize(ClientInfo, new JsonSerializerOptions() { WriteIndented = true });
             await File.WriteAllTextAsync(this.InfoFile, serlist);
 
-            await CompressFileAsync(this.InfoFile, this.InfoFile+".zip");
+            await CompressFileAsync(this.InfoFile, this.InfoFile);
         }
 
         public async void ReadModel ()

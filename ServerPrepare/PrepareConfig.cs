@@ -14,7 +14,7 @@ namespace ServerPrepare.Configuration
         public Uri SourceFolder { get; set; }
         public Uri ServerFolder { get; set; }
 
-        public Uri SettingsFile { get => new Uri (Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\ComwelUpdaterPrepare\settings.json"); }
+        Uri SettingsFile { get => new Uri (Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\ComwelUpdaterPrepare\settings.json"); }
 
         public async void SaveSettings ()
         {
@@ -32,8 +32,10 @@ namespace ServerPrepare.Configuration
                  (!File.Exists(SettingsFile.LocalPath)) )
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(SettingsFile.LocalPath));
-                SourceFolder = new Uri("");
-                ServerFolder = new Uri("");
+                this.SourceFolder = new Uri("c:\\");
+                this.ServerFolder = new Uri("c:\\");
+
+                SaveSettings();
             } else
             {
                 string settingsjson = await File.ReadAllTextAsync(SettingsFile.LocalPath);

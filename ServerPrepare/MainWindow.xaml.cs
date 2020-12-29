@@ -33,6 +33,7 @@ namespace ServerPrepare
         public MainWindow()
         {
             Settings = new PrepareSettings();
+
             InitializeComponent();
 
         }
@@ -53,6 +54,8 @@ namespace ServerPrepare
 
         private void TreeUpdateSource (SourceFolder fconfig, TreeView treeview)
         {
+            if (!Directory.Exists(fconfig.ClientFolder))
+                return;
             treeview.Items.Clear();
             List<string> toplevel = Directory.GetDirectories(fconfig.ClientFolder).ToList();
 
@@ -103,6 +106,8 @@ namespace ServerPrepare
 
         private void TreeUpdateServer(ServerFolder fconfig, TreeView treeview)
         {
+            if (!Directory.Exists(fconfig.ClientFolder))
+                return;
             treeview.Items.Clear();
             List<string> toplevel = Directory.GetDirectories(fconfig.ClientFolder).ToList();
 
@@ -189,10 +194,19 @@ namespace ServerPrepare
             Settings.ReadSettings();
             sourcefolderconfig = new SourceFolder(Settings.SourceFolder);
             serverfolderconfig = new ServerFolder(Settings.ServerFolder);
+
             Task.Run(() =>
             {
-                sourcefolderconfig.ReadInfo();
-                serverfolderconfig.ReadModel();
+                try
+                {
+                    sourcefolderconfig.ReadInfo();
+                    serverfolderconfig.ReadModel();
+                }
+                catch (Exception ex)
+                {
+
+                }
+
             });
 
             SourceFolder.Text = Settings.SourceFolder.LocalPath;
