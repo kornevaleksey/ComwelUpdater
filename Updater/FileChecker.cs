@@ -10,21 +10,22 @@ using System.Text.Json.Serialization;
 using System.ComponentModel;
 using System.Drawing;
 using Dasync.Collections;
+using Microsoft.Extensions.Logging;
 
 namespace Updater
 {
     public class FileChecker
     {
-        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private readonly ILogger logger;
 
         public EventHandler<FileCheckerProgressEventArgs> FileCheckerProgress;
         public EventHandler<FileCheckerFinishEventArgs> FileCheckerFinish;
 
-        readonly SHA256 sha256;
+        private readonly SHA256 sha256;
 
-        public FileChecker()
+        public FileChecker(ILogger<FileChecker> logger)
         {
-            logger.Info("Creating new FileChecker");
+            this.logger = logger;
             sha256 = SHA256.Create();
         }
 

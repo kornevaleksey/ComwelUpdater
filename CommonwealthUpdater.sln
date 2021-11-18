@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30225.117
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Launcher", "Launcher\Launcher.csproj", "{790DC860-BF9B-46AA-B869-140C0DB64B18}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -10,7 +10,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Launcher", "Launcher\Launch
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Updater", "Updater\Updater.csproj", "{FE0A9E6B-CCF6-4D6A-A03D-EC02659A920C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerPrepare", "ServerPrepare\ServerPrepare.csproj", "{D98979EF-3C92-40E2-B6E2-114580B79313}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerPrepare", "ServerPrepare\ServerPrepare.csproj", "{D98979EF-3C92-40E2-B6E2-114580B79313}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Config", "Config\Config.csproj", "{4EA5B781-119D-402E-B4C8-A3F3266AC17D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,6 +32,10 @@ Global
 		{D98979EF-3C92-40E2-B6E2-114580B79313}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D98979EF-3C92-40E2-B6E2-114580B79313}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D98979EF-3C92-40E2-B6E2-114580B79313}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EA5B781-119D-402E-B4C8-A3F3266AC17D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EA5B781-119D-402E-B4C8-A3F3266AC17D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EA5B781-119D-402E-B4C8-A3F3266AC17D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EA5B781-119D-402E-B4C8-A3F3266AC17D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

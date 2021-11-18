@@ -1,39 +1,42 @@
-﻿using System;
+﻿using CommonwealthUpdater.Config;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
 using System.IO;
 using System.Text.Json;
-using Config;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 
 namespace Updater
 {
     public class L2Updater
     {
-        protected static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-
         public event EventHandler<ClientCheckUpdateEventArgs> ClientCheckUpdate;
         public event EventHandler<ClientCheckErrorEventArgs> ClientCheckError;
         public event EventHandler<ClientCheckFinishEventArgs> ClientCheckFinished;
         public event EventHandler ClientUpdateFinished;
 
+        private ILogger _logger;
+
         public List<ClientFileInfo> Difference { get; private set; }
-        public bool ClientCanRun { get => File.Exists(config.ClientExeFile); }
+        public bool ClientCanRun { get => File.Exists(_config.ClientExeFile); }
         public bool UpdateIsNeed { get => Difference!=null&&Difference.Count > 0; }
 
-        L2ClientLocal cacheClient;
-        L2ClientLocal localClient;
-        L2ClientRemote remoteClient;
+        LocalClient cacheClient;
+        LocalClient localClient;
+        RemoteSourceDirectory remoteClient;
 
-        readonly Loader loader;
-        readonly L2UpdaterConfig config;
+        private readonly SimpleHttpLoader _loader;
+        private readonly UpdaterConfig _config;
 
-        public L2Updater(Loader loader, L2UpdaterConfig config)
+        public L2Updater(ILogger<L2Updater> logger, SimpleHttpLoader loader, UpdaterConfig config)
         {
-            this.loader = loader;
-            this.config = config;
+            _logger = logger;
+
+            _loader = loader;
+            _config = config;
 
         }
 
@@ -42,9 +45,9 @@ namespace Updater
             logger.Info("Start fast local client check");
             ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr="Быстрая проверка файлов игры" });
 
-            cacheClient = new L2ClientLocal();
-            localClient = new L2ClientLocal();
-            remoteClient = new L2ClientRemote(loader);
+            cacheClient = new LocalClient();
+            localClient = new LocalClient();
+            remoteClient = new RemoteClient(loader);
 
             try
             {
@@ -103,8 +106,8 @@ namespace Updater
         {
             logger.Info("Start full local client check");
 
-            remoteClient = new L2ClientRemote(loader);
-            localClient = new L2ClientLocal();
+            remoteClient = new RemoteClient(loader);
+            localClient = new LocalClient();
             localClient.Checker.FileCheckerProgress += FullCheckCheckerProgress;
             localClient.Checker.FileCheckerFinish += FullCheckCheckerFinish;
 
@@ -171,7 +174,7 @@ namespace Updater
         {
             logger.Info("Start rewriting client");
 
-            remoteClient = new L2ClientRemote(loader);
+            remoteClient = new RemoteClient(loader);
 
             ClientCheckUpdate?.Invoke(this, new ClientCheckUpdateEventArgs() { InfoStr = "Загрузка перечня файлов игры" });
 
@@ -199,23 +202,23 @@ namespace Updater
             logger.Info("Finished updating client");
         }
 
-        private List<ClientFileInfo> CompareModels (L2ClientLocal local, L2ClientRemote remote, L2ClientLocal shadow)
+        private List<ClientFileInfo> CompareModels (LocalClient local, RemoteSourceDirectory remote, LocalClient shadow)
         {
             List<ClientFileInfo> difference = new List<ClientFileInfo>();
 
-            foreach (ClientFileInfo fileinfo in remote.ClientInfo.FilesInfo)
+            foreach (ClientFileInfo fileInfo in remote.ClientInfo.FilesInfo)
             {
-                ClientFileInfo cachedinfo = shadow.ClientInfo?.FilesInfo.Find(m => 0 == String.Compare(m.FileName, fileinfo.FileName, StringComparison.OrdinalIgnoreCase));
-                ClientFileInfo localinfo = local.ClientInfo.FilesInfo.Find(m => 0 == String.Compare(m.FileName, fileinfo.FileName, StringComparison.OrdinalIgnoreCase));
+                ClientFileInfo cachedinfo = shadow.clientInfo?.FilesInfo.Find(m => 0 == String.Compare(m.FileName, fileInfo.FileName, StringComparison.OrdinalIgnoreCase));
+                ClientFileInfo localinfo = local.ClientInfo.FilesInfo.Find(m => 0 == String.Compare(m.FileName, fileInfo.FileName, StringComparison.OrdinalIgnoreCase));
 
-                if (FileChecker.FilesCompare(localinfo, fileinfo, cachedinfo) == false)
-                    difference.Add(fileinfo);
+                if (FileChecker.FilesCompare(localinfo, fileInfo, cachedinfo) == false)
+                    difference.Add(fileInfo);
             }
 
             return difference;
         }
 
-        private List<ClientFileInfo> CompareModels (L2ClientLocal local, L2ClientRemote remote)
+        private List<ClientFileInfo> CompareModels (LocalClient local, RemoteSourceDirectory remote)
         {
             List<ClientFileInfo> difference = new List<ClientFileInfo>();
 
@@ -223,7 +226,9 @@ namespace Updater
             {
                 ClientFileInfo localinfo = local.ClientInfo.FilesInfo.Find(m => 0 == String.Compare(m.FileName, fileinfo.FileName, StringComparison.OrdinalIgnoreCase));
                 if (FileChecker.FilesCompare(localinfo, fileinfo) == false)
+                {
                     difference.Add(fileinfo);
+                }
         
             }
 
