@@ -9,25 +9,42 @@ using System.Threading.Tasks;
 
 namespace Updater
 {
-    public class LocalClient
+    public class LocalUpdateDirectory
     {
-        protected ILogger logger;
+        protected ILogger _logger;
 
-        private readonly FileChecker checker;
+        private readonly FileChecker _checker;
 
         private DirectoryModel clientInfo;
+        private readonly Uri _localDirectoryPath;
 
-        public LocalClient(ILogger<LocalClient> logger, FileChecker fileChecker)
+        public LocalUpdateDirectory(ILogger logger, FileChecker fileChecker, Uri localDirectoryPath)
         {
-            this.logger = logger;
-            this.checker = fileChecker;
+            _logger = logger;
+            _checker = fileChecker;
+            _localDirectoryPath = localDirectoryPath;
+        }
+
+        public DirectoryModel Model { get; private set; }
+
+        public async Task CreateDirectoryModel(CancellationToken token)
+        {
+            string directoryName = _localDirectoryPath.LocalPath;
+            DirectoryInfo directoryInfo = new DirectoryInfo(directoryName);
+
+            FileListEnumerator files = new FileListEnumerator(directoryInfo);
+
+            IEnumerable<string> filesList = files.Select(info => info.FullName);
+
+            clientInfo.FilesInfo = await _checker.GetFilesListInfo(filesList, directoryName, token);
+            clientInfo.ClientSize += clientInfo.FilesInfo.Sum(ci => ci.FileSize);
         }
 
         public async Task CreateModelFromDirectory(Uri localDir, CancellationToken token)
         {
             List<string> filenames_local;
             if (Directory.Exists(localDir.LocalPath) == true)
-                filenames_local = await Task.Run(() => Directory.GetFiles(localDir.LocalPath, "*.*", SearchOption.AllDirectories).ToList());//.Select(fn => Path.GetRelativePath(localDir.LocalPath, fn)).ToList());
+                filenames_local = await Task.Run(() => Directory.GetFiles(localDir.LocalPath, "*.*", SearchOption.AllDirectories).ToList());
             else
                 filenames_local = new List<string>();
 
@@ -39,7 +56,7 @@ namespace Updater
                 FilesInfo = new List<ClientFileInfo>()
             };
 
-            clientInfo.FilesInfo = await checker.GetFilesListInfo(filenames_local, localDir.LocalPath, token);
+            clientInfo.FilesInfo = await _checker.GetFilesListInfo(filenames_local, localDir.LocalPath, token);
             clientInfo.ClientSize += clientInfo.FilesInfo.Sum(ci => ci.FileSize);
         }
 
@@ -59,13 +76,13 @@ namespace Updater
                 FilesInfo = new List<ClientFileInfo>()
             };
 
-            clientInfo.FilesInfo = await checker.GetFilesListInfo(filenames_local, localDir.LocalPath, token, complete);
+            clientInfo.FilesInfo = await _checker.GetFilesListInfo(filenames_local, localDir.LocalPath, token, complete);
             clientInfo.ClientSize += clientInfo.FilesInfo.Sum(ci => ci.FileSize);
         }
 
         public async Task CalculateHashesofImportantFiles(Uri localDir, RemoteSourceDirectory clientRemote, CancellationToken token)
         {
-            List<ClientFileInfo> important_files = clientRemote.ClientInfo.FilesInfo.Where(info => info.ImportantFile).ToList();
+            List<ClientFileInfo> important_files = clientRemote.Model.FilesInfo.Where(info => info.ImportantFile).ToList();
 
             foreach (ClientFileInfo fileinfo in important_files)
             {
@@ -76,7 +93,7 @@ namespace Updater
                 if (index >= 0)
                 {
                     string path_to_local_file = Path.Combine(localDir.LocalPath, clientInfo.FilesInfo[index].FileName);
-                    ClientFileInfo local_hash = await checker.GetFileInfo(path_to_local_file, true);
+                    ClientFileInfo local_hash = await _checker.GetFileInfo(path_to_local_file, true);
                     clientInfo.FilesInfo[index].Hash = local_hash.Hash;
                 }
             }

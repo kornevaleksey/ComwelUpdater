@@ -50,7 +50,7 @@ namespace Updater
             return clientFileInfo;
         }
 
-        public async Task<List<ClientFileInfo>> GetFilesListInfo(List<string> filenames, string localpath, CancellationToken token, bool complete = false)
+        public async Task<List<ClientFileInfo>> GetFilesListInfo(IEnumerable<string> filenames, string localpath, CancellationToken token, bool complete = false)
         {
             List<ClientFileInfo> res = new List<ClientFileInfo>();
 
@@ -63,10 +63,10 @@ namespace Updater
 
                 FileCheckerProgress?.Invoke(this, new FileCheckerProgressEventArgs()
                 {
-                    FilesCount = filenames.Count,
+                    FilesCount = progress_counter + 2,//filenames.Count,
                     CurrentIndex = progress_counter++,
                     FileName = filename
-                });
+                }); ;
 
                 ClientFileInfo fileinfo = await GetFileInfo(filename, complete);
                 fileinfo.FileName = Path.GetRelativePath(localpath, filename);
@@ -75,7 +75,7 @@ namespace Updater
 
             FileCheckerFinish?.Invoke(this, new FileCheckerFinishEventArgs()
             {
-                FilesCount = filenames.Count
+                FilesCount = filenames.Count()
             });
 
             return res;

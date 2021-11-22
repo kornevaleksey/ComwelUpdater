@@ -15,13 +15,13 @@ namespace Updater
 
         private DirectoryModel _model;
 
-        public RemoteSourceDirectory(ILogger<RemoteSourceDirectory> logger, SimpleHttpLoader loader)
+        public RemoteSourceDirectory(ILogger logger, SimpleHttpLoader loader)
         {
             _logger = logger;
             _loader = loader;
         }
 
-        public DirectoryModel ClientInfo => _model;
+        public DirectoryModel Model => _model;
 
         public async Task LoadRemoteModel(string remoteModelAddr, CancellationToken token)
         {
