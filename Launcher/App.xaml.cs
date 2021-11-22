@@ -10,18 +10,19 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using CommonwealthUpdater.Config;
+using Launcher.Views;
+using Config;
 
-namespace CommonwealthUpdater
+namespace Launcher
 {
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
-    public partial class App : PrismAppication
+    public partial class App
     {
         protected override Window CreateShell()
         {
-            return Container.Resolve<MainWindow>();
+            return Container.Resolve<MainWindowView>();
         }
 
         protected override void RegisterTypes(IContainerRegistry containerRegistry)

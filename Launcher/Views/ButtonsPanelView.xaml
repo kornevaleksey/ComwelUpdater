@@ -1,0 +1,126 @@
+﻿<Page
+    x:Class="Launcher.Views.NavigatePanelView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Launcher.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:prism="http://prismlibrary.com/"
+    Title="ButtonsPanelView"
+    Width="92"
+    Height="330"
+    d:DesignHeight="330"
+    d:DesignWidth="92"
+    prism:ViewModelLocator.AutoWireViewModel="True"
+    Background="#ffe038"
+    mc:Ignorable="d">
+
+    <DockPanel
+        Grid.Row="1"
+        Grid.Column="1"
+        VerticalAlignment="Stretch"
+        Background="#ffe038"
+        LastChildFill="False">
+        <Button
+            x:Name="UpdaterSelect"
+            Width="50"
+            Height="50"
+            Margin="5,5,5,20"
+            AutomationProperties.HelpText="Играть на сервере Commonwealth"
+            BorderBrush="Transparent"
+            Click="UpdaterClick"
+            DockPanel.Dock="Bottom"
+            Style="{StaticResource ImageButton}"
+            ToolTip="Обновление клиента">
+            <Button.Resources>
+                <Style TargetType="{x:Type Border}">
+                    <Setter Property="CornerRadius" Value="10" />
+                </Style>
+            </Button.Resources>
+            <Button.Background>
+                <ImageBrush ImageSource="/Assets/update.png" Stretch="Fill" />
+            </Button.Background>
+        </Button>
+        <Button
+            x:Name="SettingsBtn"
+            Width="50"
+            Height="50"
+            Margin="5"
+            AutomationProperties.HelpText="Настроить лаунчер"
+            BorderBrush="Transparent"
+            Click="Settings_Click"
+            DockPanel.Dock="Bottom"
+            Style="{StaticResource ImageButton}"
+            ToolTip="Настройки">
+            <Button.Resources>
+                <Style TargetType="{x:Type Border}">
+                    <Setter Property="CornerRadius" Value="10" />
+                </Style>
+            </Button.Resources>
+            <Button.Background>
+                <ImageBrush ImageSource="/Assets/settings.png" Stretch="Fill" />
+            </Button.Background>
+        </Button>
+        <Button
+            x:Name="RecheckBtn"
+            Width="50"
+            Height="50"
+            Margin="5"
+            AutomationProperties.HelpText="Проверить полностью"
+            BorderBrush="Transparent"
+            Click="RecheckBtn_Click"
+            Cursor="Hand"
+            DockPanel.Dock="Bottom"
+            Style="{StaticResource ImageButton}"
+            ToolTip="Полная проверка">
+            <Button.Resources>
+                <Style TargetType="{x:Type Border}">
+                    <Setter Property="CornerRadius" Value="10" />
+                </Style>
+            </Button.Resources>
+            <Button.Background>
+                <ImageBrush ImageSource="/Assets/check.png" />
+            </Button.Background>
+        </Button>
+        <Button
+            x:Name="AboutBtn"
+            Width="50"
+            Height="50"
+            Margin="5"
+            AutomationProperties.HelpText="Узнать о программе"
+            BorderBrush="Transparent"
+            Click="AboutBtn_Click"
+            DockPanel.Dock="Bottom"
+            Style="{StaticResource ImageButton}"
+            ToolTip="Помощь">
+            <Button.Resources>
+                <Style TargetType="{x:Type Border}">
+                    <Setter Property="CornerRadius" Value="10" />
+                </Style>
+            </Button.Resources>
+            <Button.Background>
+                <ImageBrush ImageSource="/Assets/vopros.png" Stretch="Fill" />
+            </Button.Background>
+        </Button>
+        <Button
+            x:Name="GudilapBtn"
+            Width="50"
+            Height="50"
+            Margin="5"
+            AutomationProperties.HelpText="Информатироваться"
+            BorderBrush="Transparent"
+            Click="GudilapBtn_Click"
+            DockPanel.Dock="Bottom"
+            Style="{StaticResource ImageButton}"
+            ToolTip="Gudilap.ru">
+            <Button.Resources>
+                <Style TargetType="{x:Type Border}">
+                    <Setter Property="CornerRadius" Value="10" />
+                </Style>
+            </Button.Resources>
+            <Button.Background>
+                <ImageBrush ImageSource="/Assets/gudilap.png" />
+            </Button.Background>
+        </Button>
+    </DockPanel>
+</Page>
