@@ -1,4 +1,4 @@
-﻿<Page
+﻿<UserControl
     x:Class="Launcher.Views.SettingsView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -7,7 +7,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:prism="http://prismlibrary.com/"
     xmlns:vm="clr-namespace:Launcher.ViewModels"
-    Title="SettingsView"
     Width="368"
     Height="330"
     d:DesignHeight="330"
@@ -15,10 +14,7 @@
     prism:ViewModelLocator.AutoWireViewModel="True"
     mc:Ignorable="d">
 
-    <Grid
-        x:Name="SettingsGrid"
-        Background="White"
-        MouseDown="MainGrid_MouseDown">
+    <Grid x:Name="SettingsGrid" Background="White">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2.5*" />
             <ColumnDefinition Width="16*" />
@@ -51,7 +47,7 @@
                 Background="#ffe038"
                 FontSize="14"
                 Tag="DownloadAddress"
-                TextChanged="RemoteAddrChanged">
+                Text="{Binding RemoteSourceAddress}">
                 <TextBox.Resources>
                     <Style TargetType="{x:Type Border}">
                         <Setter Property="CornerRadius" Value="5" />
@@ -95,7 +91,7 @@
                 FontSize="14"
                 IsReadOnly="True"
                 Tag="ClientFolder"
-                TextChanged="ClientDestination_TextChanged">
+                Text="{Binding LocalGameDirectory}">
                 <TextBox.Resources>
                     <Style TargetType="{x:Type Border}">
                         <Setter Property="CornerRadius" Value="5" />
@@ -118,7 +114,7 @@
             Margin="5,10,5,10"
             VerticalAlignment="Stretch"
             Background="#736356"
-            Click="BtnSelect_Click">
+            Command="{Binding SelectDirectoryCommand}">
             <Button.Resources>
                 <Style TargetType="{x:Type Border}">
                     <Setter Property="CornerRadius" Value="5" />
@@ -136,12 +132,10 @@
             Grid.Column="2"
             Margin="5"
             VerticalAlignment="Center"
-            Checked="ChkGameFolder_Checked"
             Content="В папке с игрой"
             FontSize="14"
             FontWeight="Medium"
-            IsChecked="False"
-            Unchecked="ChkGameFolder_Unchecked" />
+            IsChecked="{Binding PlaceInGameDirectory}" />
         <TextBlock
             x:Name="TxtBSaveSettings"
             Grid.Row="3"
@@ -153,4 +147,4 @@
             Text=""
             TextWrapping="Wrap" />
     </Grid>
-</Page>
+</UserControl>

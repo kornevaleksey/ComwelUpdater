@@ -9,12 +9,13 @@
     xmlns:viewModels="clr-namespace:Launcher.ViewModels"
     Width="368"
     Height="330"
-    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance viewModels:UpdateViewModel,
+                                     IsDesignTimeCreatable=True}"
     d:DesignHeight="330"
     d:DesignWidth="368"
     prism:ViewModelLocator.AutoWireViewModel="True"
-    >
-    
+    mc:Ignorable="d">
+
     <Grid x:Name="UpdaterGrid" Background="White">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2.5*" />
@@ -105,7 +106,12 @@
                 Grid.ColumnSpan="2"
                 Margin="0,10,0,0"
                 Orientation="Vertical">
-                <TextBlock Text="{Binding InfoBlock}" TextWrapping="Wrap">InfoText</TextBlock>
+                <TextBlock
+                    Foreground="{Binding InfoBlockColor}"
+                    Text="{Binding InfoBlock}"
+                    TextWrapping="Wrap">
+                    InfoText
+                </TextBlock>
                 <TextBlock Text="{Binding InfoBlockAdd}" TextWrapping="Wrap">InfoText Addition</TextBlock>
             </StackPanel>
         </Grid>
@@ -114,7 +120,7 @@
             Grid.Column="1"
             Grid.ColumnSpan="1"
             Background="#736356"
-            Command="{Binding PlayGame}"
+            Command="{Binding PlayGameCommand}"
             IsEnabled="{Binding PlayEnabled}"
             Style="{StaticResource ButtonRoundedBrown}">
             <TextBlock FontSize="20" Foreground="White">
@@ -124,7 +130,7 @@
         <Button
             Grid.Row="2"
             Grid.Column="2"
-            Command="{Binding UpdateGame}"
+            Command="{Binding UpdateGameCommand}"
             IsEnabled="{Binding UpdateEnabled}"
             Style="{StaticResource ButtonRoundedBrown}">
             <TextBlock

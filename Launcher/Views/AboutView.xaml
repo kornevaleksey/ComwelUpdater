@@ -10,6 +10,8 @@
     Title="AboutView"
     Width="368"
     Height="330"
+    d:DataContext="{d:DesignInstance IsDesignTimeCreatable=True,
+                                     Type=vm:AboutViewModel}"
     d:DesignHeight="330"
     d:DesignWidth="368"
     prism:ViewModelLocator.AutoWireViewModel="True"
@@ -39,10 +41,7 @@
             TextWrapping="Wrap">
             <Run FontSize="16" Text="Lineage II Commonwealth Launcher" />
             <LineBreak />
-            <Run
-                x:Name="txtbVersionInfo"
-                FontSize="14"
-                Text="Версия 0.8 15 сентября 2020 г" />
+            <Run FontSize="14" Text="{Binding VersionInfo, Mode=OneWay}" />
             <LineBreak />
             <Run Text="Copyright (c) Korall" />
             <LineBreak />
@@ -53,14 +52,13 @@
             ,<Run Text="Inst" ToolTip="Доработка клиента, тестирование" />
             ,<Run Text="wfmo" ToolTip="Советы по разработке, тестирование" />
             <LineBreak />
-            <Run Text="Использованные компоненты:" />
-            <Hyperlink NavigateUri="https://nlog-project.org/" RequestNavigate="Hyperlink_RequestNavigate">NLog</Hyperlink>
-            ,<Hyperlink NavigateUri="http://www.ookii.org/software/dialogs/" RequestNavigate="Hyperlink_RequestNavigate">Ookii.Dialogs</Hyperlink>
-            ,<Hyperlink NavigateUri="https://github.com/adamhathcock/sharpcompress" RequestNavigate="Hyperlink_RequestNavigate">SharpCompress</Hyperlink>
+            <Hyperlink NavigateUri="http://l2-update.gudilap.ru/license.txt">
+                <Run Text="Лицензия на использование" />
+            </Hyperlink>
             <LineBreak />
-            <Hyperlink NavigateUri="http://l2-update.gudilap.ru/license.txt" RequestNavigate="Hyperlink_RequestNavigate">Лицензия на использование</Hyperlink>
-            <LineBreak />
-            <Hyperlink NavigateUri="http://l2-update.gudilap.ru" RequestNavigate="Hyperlink_RequestNavigate">Сайт программы</Hyperlink>
+            <Hyperlink NavigateUri="http://l2-update.gudilap.ru">
+                <Run Text="Сайт программы" />
+            </Hyperlink>
         </TextBlock>
     </Grid>
 

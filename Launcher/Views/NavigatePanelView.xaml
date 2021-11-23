@@ -1,4 +1,4 @@
-﻿<Page
+﻿<UserControl
     x:Class="Launcher.Views.NavigatePanelView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -6,7 +6,6 @@
     xmlns:local="clr-namespace:Launcher.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:prism="http://prismlibrary.com/"
-    Title="ButtonsPanelView"
     Width="92"
     Height="330"
     d:DesignHeight="330"
@@ -28,10 +27,10 @@
             Margin="5,5,5,20"
             AutomationProperties.HelpText="Играть на сервере Commonwealth"
             BorderBrush="Transparent"
-            Click="UpdaterClick"
+            Command="{Binding UpdaterCommand}"
             DockPanel.Dock="Bottom"
             Style="{StaticResource ImageButton}"
-            ToolTip="Обновление клиента">
+            ToolTip="Обновление клиента" Cursor="Hand">
             <Button.Resources>
                 <Style TargetType="{x:Type Border}">
                     <Setter Property="CornerRadius" Value="10" />
@@ -48,10 +47,10 @@
             Margin="5"
             AutomationProperties.HelpText="Настроить лаунчер"
             BorderBrush="Transparent"
-            Click="Settings_Click"
+            Command="{Binding SettingsCommand}"
             DockPanel.Dock="Bottom"
             Style="{StaticResource ImageButton}"
-            ToolTip="Настройки">
+            ToolTip="Настройки" Cursor="Hand">
             <Button.Resources>
                 <Style TargetType="{x:Type Border}">
                     <Setter Property="CornerRadius" Value="10" />
@@ -68,7 +67,7 @@
             Margin="5"
             AutomationProperties.HelpText="Проверить полностью"
             BorderBrush="Transparent"
-            Click="RecheckBtn_Click"
+            Command="{Binding RecheckCommand}"
             Cursor="Hand"
             DockPanel.Dock="Bottom"
             Style="{StaticResource ImageButton}"
@@ -89,7 +88,7 @@
             Margin="5"
             AutomationProperties.HelpText="Узнать о программе"
             BorderBrush="Transparent"
-            Click="AboutBtn_Click"
+            Command="{Binding AboutCommand}"
             DockPanel.Dock="Bottom"
             Style="{StaticResource ImageButton}"
             ToolTip="Помощь">
@@ -109,7 +108,7 @@
             Margin="5"
             AutomationProperties.HelpText="Информатироваться"
             BorderBrush="Transparent"
-            Click="GudilapBtn_Click"
+            Command="{Binding OpenGudilapCommand}"
             DockPanel.Dock="Bottom"
             Style="{StaticResource ImageButton}"
             ToolTip="Gudilap.ru">
@@ -123,4 +122,4 @@
             </Button.Background>
         </Button>
     </DockPanel>
-</Page>
+</UserControl>

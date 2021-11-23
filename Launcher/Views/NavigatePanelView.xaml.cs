@@ -18,7 +18,7 @@ namespace Launcher.Views
     /// <summary>
     /// Логика взаимодействия для ButtonsPanelView.xaml
     /// </summary>
-    public partial class NavigatePanelView : Page
+    public partial class NavigatePanelView : UserControl
     {
         public NavigatePanelView()
         {

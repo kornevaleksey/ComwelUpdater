@@ -36,8 +36,7 @@
             Grid.Column="1"
             Grid.ColumnSpan="1"
             Margin="5"
-            Background="#736356"
-            Click="BtnFullCheck_Click">
+            Background="#736356">
             <Button.Resources>
                 <Style TargetType="{x:Type Border}">
                     <Setter Property="CornerRadius" Value="10" />
@@ -60,7 +59,7 @@
             Background="White"
             BorderBrush="#736356"
             BorderThickness="2"
-            Click="BtnFullReload_Click">
+            >
             <Button.Resources>
                 <Style TargetType="{x:Type Border}">
                     <Setter Property="CornerRadius" Value="10" />

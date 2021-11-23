@@ -16,13 +16,14 @@ using System.Diagnostics;
 using System.Net.Http;
 using Ookii.Dialogs.Wpf;
 using System.Reflection;
+using Launcher.Interfaces;
 
 namespace Launcher.Views
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindowView : Window
+    public partial class MainWindowView : Window, ICloseable, IWindowState
     {
         //static UpdaterConfig UpdaterConfig;
 
@@ -432,11 +433,11 @@ namespace Launcher.Views
         //    BtnFullReloadText.Text = "Полное обновление";
         //}
 
-        //private void MainGrid_MouseDown(object sender, MouseButtonEventArgs e)
-        //{
-        //    if (Mouse.LeftButton == MouseButtonState.Pressed)
-        //        this.DragMove();
-        //}
+        private void MainGrid_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (Mouse.LeftButton == MouseButtonState.Pressed)
+                this.DragMove();
+        }
 
         //private void ConfigFinishedRead (object sender, EventArgs args)
         //{
@@ -467,16 +468,6 @@ namespace Launcher.Views
 
         //#region Selection DockPanel events
 
-        //private void Button_Click(object sender, RoutedEventArgs e)
-        //{
-        //    this.Close();
-        //}
-
-        //private void Button_Click_1(object sender, RoutedEventArgs e)
-        //{
-        //    this.WindowState = WindowState.Minimized;
-        //}
-
         //private void UpdaterClick(object sender, RoutedEventArgs e)
         //{
         //    MainSelector.SelectedIndex = 0;
@@ -500,7 +491,7 @@ namespace Launcher.Views
         //        updater.ClientCheckError += ClientCheckError;
         //        loader.LoaderProgress += ClientLoadUpdate;
         //        loader.UnZipProgress += LoadFileExtractProgress;
-                
+
 
         //        InfoBlock.Text = "Проверка клиента игры Lineage II";
 
@@ -640,7 +631,7 @@ namespace Launcher.Views
         //        RemoteAddr.ToolTip = new TextBlock() { Text = "Не могу соединиться с сервером" };
         //    }
         //}
-        
+
         //private void RemoteAddrChanged(object sender, TextChangedEventArgs e)
         //{
         //    SettingsSave();
@@ -1023,10 +1014,6 @@ namespace Launcher.Views
         //}
 
         //#endregion
-
-        //private void updaterwindow_Closed(object sender, EventArgs e)
-        //{
-        //}
 
         //private bool SearchForRunningLineageProcess ()
         //{
