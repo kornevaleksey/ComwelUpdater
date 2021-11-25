@@ -16,6 +16,8 @@ using System.Threading;
 using Microsoft.Extensions.Logging;
 using Updater.Exceptions;
 using Updater.Events;
+using System.Security.Authentication;
+using System.Net.Http.Headers;
 
 namespace Updater
 {
@@ -39,7 +41,15 @@ namespace Updater
         public SimpleHttpLoader(ILogger<SimpleHttpLoader> logger, FileChecker fileChecker, int downloadTries = 5)
         {
             _logger = logger;
-            httpClient = new HttpClient();
+
+            var handler = new HttpClientHandler()
+            {
+                SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls | SslProtocols.Ssl3
+            };
+            httpClient = new HttpClient(handler);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml"));
+
             _fileChecker = fileChecker;
 
             _downloadTries = downloadTries;
@@ -48,13 +58,20 @@ namespace Updater
         public Uri RemoteAddr { get; set; }
         public Uri RemoteInfoAddr { get; set; }
 
-        public async Task<bool> CheckConnect()
+        public async Task<bool> CheckConnectAsync()
         {
-            HttpResponseMessage response = await httpClient.GetAsync(RemoteAddr.ToString());
-            response.EnsureSuccessStatusCode();
-            string responseBody = await response.Content.ReadAsStringAsync();
-            _logger.LogInformation($"Success connection to remote storage on {RemoteAddr}");
-            return true;
+            try
+            {
+                HttpResponseMessage response = await httpClient.GetAsync(RemoteAddr.ToString());
+                response.EnsureSuccessStatusCode();
+                string responseBody = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation($"Success connection to remote storage on {RemoteAddr}");
+                return true;
+            }
+            catch (HttpRequestException)
+            {
+                return false;
+            }
         }
 
         public async Task DownloadFile (string remoteRelativePath, string localFileName, CancellationToken token)

@@ -9,6 +9,8 @@
     xmlns:vm="clr-namespace:Launcher.ViewModels"
     Width="368"
     Height="330"
+    d:DataContext="{d:DesignInstance vm:SettingsViewModel,
+                                     IsDesignTimeCreatable=True}"
     d:DesignHeight="330"
     d:DesignWidth="368"
     prism:ViewModelLocator.AutoWireViewModel="True"
@@ -32,7 +34,7 @@
             Grid.Row="0"
             Grid.Column="1"
             Grid.ColumnSpan="2"
-            Margin="5"
+            Margin="0,5,0,5"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch">
             <Label
@@ -41,28 +43,32 @@
                 FontWeight="Medium">
                 Адрес сервера с обновлениями:
             </Label>
-            <TextBox
-                x:Name="RemoteAddr"
-                VerticalContentAlignment="Stretch"
-                Background="#ffe038"
-                FontSize="14"
-                Tag="DownloadAddress"
-                Text="{Binding RemoteSourceAddress}">
-                <TextBox.Resources>
-                    <Style TargetType="{x:Type Border}">
-                        <Setter Property="CornerRadius" Value="5" />
-                    </Style>
-                </TextBox.Resources>
-            </TextBox>
+            <StackPanel Orientation="Horizontal">
+                <TextBox
+                    MinWidth="295"
+                    VerticalContentAlignment="Center"
+                    Background="#ffe038"
+                    FontSize="14"
+                    Tag="DownloadAddress"
+                    Text="{Binding RemoteSourceAddress}"
+                    ToolTip="{Binding RemoteDirectoryToolTip}">
+                    <TextBox.Resources>
+                        <Style TargetType="{x:Type Border}">
+                            <Setter Property="CornerRadius" Value="5" />
+                        </Style>
+                    </TextBox.Resources>
+                </TextBox>
+                <Ellipse
+                    x:Name="RemoteOK"
+                    Grid.Row="0"
+                    Grid.Column="3"
+                    Width="10"
+                    Height="10"
+                    Margin="5,0,0,0"
+                    Fill="{Binding RemoteDestinationCheck}" />
+            </StackPanel>
         </DockPanel>
-        <Ellipse
-            x:Name="RemoteOK"
-            Grid.Row="0"
-            Grid.Column="3"
-            Width="10"
-            Height="10"
-            Margin="0,25,0,0"
-            Fill="Gray" />
+
         <DockPanel
             Grid.Row="1"
             Grid.Column="1"
@@ -80,33 +86,38 @@
                     Расположение клиента Lineage II:
                 </Label>
             </DockPanel>
-            <TextBox
-                x:Name="ClientDestination"
-                Grid.Row="2"
-                Grid.Column="1"
-                Grid.ColumnSpan="2"
-                Margin="5"
-                VerticalContentAlignment="Center"
-                Background="#ffe038"
-                FontSize="14"
-                IsReadOnly="True"
-                Tag="ClientFolder"
-                Text="{Binding LocalGameDirectory}">
-                <TextBox.Resources>
-                    <Style TargetType="{x:Type Border}">
-                        <Setter Property="CornerRadius" Value="5" />
-                    </Style>
-                </TextBox.Resources>
-            </TextBox>
+            <StackPanel Orientation="Horizontal">
+                <TextBox
+                    x:Name="ClientDestination"
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    Grid.ColumnSpan="2"
+                    MinWidth="295"
+                    Margin="0,5,0,5"
+                    VerticalContentAlignment="Center"
+                    Background="#ffe038"
+                    FontSize="14"
+                    IsEnabled="{Binding PlaceInGameDirectory, Converter={StaticResource InverseBooleanConverter}}"
+                    IsReadOnly="True"
+                    Tag="ClientFolder"
+                    Text="{Binding LocalGameDirectory}">
+                    <TextBox.Resources>
+                        <Style TargetType="{x:Type Border}">
+                            <Setter Property="CornerRadius" Value="5" />
+                        </Style>
+                    </TextBox.Resources>
+                </TextBox>
+                <Ellipse
+                    x:Name="DestinationOK"
+                    Grid.Row="1"
+                    Grid.Column="3"
+                    Width="10"
+                    Height="10"
+                    Margin="5,0,0,0"
+                    Fill="{Binding LocalDestinationCheck}" />
+            </StackPanel>
         </DockPanel>
-        <Ellipse
-            x:Name="DestinationOK"
-            Grid.Row="1"
-            Grid.Column="3"
-            Width="10"
-            Height="10"
-            Margin="0,25,0,0"
-            Fill="Gray" />
+
         <Button
             x:Name="BtnSelect"
             Grid.Row="2"

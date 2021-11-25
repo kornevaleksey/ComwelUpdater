@@ -5,11 +5,11 @@ using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 using Updater;
 
 namespace Launcher.ViewModels
@@ -82,11 +82,11 @@ namespace Launcher.ViewModels
             try
             {
                 UpdateEnabled = false;
-                ProcessStartInfo l2info = new ProcessStartInfo();
+                ProcessStartInfo l2info = new();
                 l2info.EnvironmentVariables["__COMPAT_LAYER"] = "RunAsInvoker";
                 l2info.FileName = config.ClientExeFile;
 
-                Process l2Run = new Process
+                Process l2Run = new()
                 {
                     EnableRaisingEvents = true,
                     StartInfo = l2info
@@ -108,7 +108,7 @@ namespace Launcher.ViewModels
             throw new NotImplementedException();
         }
 
-        private async void UpdateGame()
+        private void UpdateGame()
         {
             UpdateEnabled = false;
 

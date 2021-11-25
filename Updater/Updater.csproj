@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="AsyncEnumerator" Version="4.0.2" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Net.Http" Version="2.2.29" />
     <PackageReference Include="NLog" Version="4.7.4" />
     <PackageReference Include="SharpCompress" Version="0.26.0" />
   </ItemGroup>
