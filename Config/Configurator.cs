@@ -8,18 +8,16 @@ using System.Threading.Tasks;
 
 namespace Config
 {
-    public class ConfigReader<T> where T : class
+    public class Configurator
     {
-        private readonly string _configPath;
         private readonly JsonSerializerOptions _jsonSerializerOptions;
         private readonly ILogger _logger;
-        private T? _config;
 
-        public ConfigReader(ILogger<ConfigReader<T>> logger, string configPath)
+        private static UpdaterConfig? updaterConfig;
+
+        public Configurator(ILogger logger)
         {
             _logger = logger;
-            _configPath = configPath;
-            _config = null;
 
             _jsonSerializerOptions = new JsonSerializerOptions()
             {
@@ -27,25 +25,27 @@ namespace Config
             };
         }
 
-        public async Task<T?> ReadAsync(string configFile, T? defaultConfig = null)
+        public async Task<UpdaterConfig?> ReadAsync(UpdaterConfig? defaultConfig = null)
         {
-            if (_config != null)
+            if (updaterConfig != null)
             {
-                return _config;
+                return updaterConfig;
             }
 
-            string fullName = Path.Combine(_configPath, configFile);
+            UpdaterConfig? _config;
+
+            string fullName = Path.Combine(ConfigDirectory, nameof(UpdaterConfig), ".json");
 
             if (!File.Exists(fullName) && defaultConfig != null)
             {
                 return defaultConfig;
             }
 
-            _logger.LogInformation($"Start read config {typeof(T)} from file {fullName}");
+            _logger.LogInformation($"Start read updater config from file {fullName}");
 
             try
             {
-                _config = await JsonSerializer.DeserializeAsync<T>(File.Open(fullName, FileMode.Open, FileAccess.Read));
+                _config = await JsonSerializer.DeserializeAsync<UpdaterConfig>(File.Open(fullName, FileMode.Open, FileAccess.Read));
                 _logger.LogInformation($"Config from file {fullName} succefully readed");
             }
             catch (Exception ex)
@@ -54,12 +54,14 @@ namespace Config
                 throw;
             }
 
+            updaterConfig = _config;
+
             return _config;
         }
 
-        public async Task WriteAsync(T config, string configFile)
+        public async Task WriteAsync(UpdaterConfig config)
         {
-            string fullName = Path.Combine(_configPath, configFile);
+            string fullName = Path.Combine(_configPath, nameof(UpdaterConfig), ".json");
             string jsonConfig = JsonSerializer.Serialize(config, _jsonSerializerOptions);
             await File.WriteAllTextAsync(fullName, jsonConfig);
         }

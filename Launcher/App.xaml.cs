@@ -17,6 +17,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using Updater;
+using System.IO;
 
 namespace Launcher
 {
@@ -36,10 +37,11 @@ namespace Launcher
             containerRegistry.RegisterSingleton<ILoggerFactory, LoggerFactory>();
             containerRegistry.RegisterSingleton(typeof(ILogger<>), typeof(Logger<>));
 
+            string configDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ComwelUpdater");
+            containerRegistry.RegisterSingleton<Configurator>(p => new Configurator(p.Resolve<Microsoft.Extensions.Logging.ILogger<Configurator>>(), configDirectory));
             containerRegistry.RegisterSingleton<FileChecker>();
             containerRegistry.RegisterSingleton<SimpleHttpLoader>();
             containerRegistry.RegisterSingleton<GameUpdater>();
-            containerRegistry.RegisterSingleton<UpdaterConfig>();
 
             //Prism
             containerRegistry.RegisterForNavigation<MainWindowView>();

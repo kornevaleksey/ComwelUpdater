@@ -1,4 +1,6 @@
-﻿using Prism.Commands;
+﻿using Config;
+using Ookii.Dialogs.Wpf;
+using Prism.Commands;
 using Prism.Mvvm;
 using Prism.Regions;
 using System;
@@ -18,10 +20,14 @@ namespace Launcher.ViewModels
 
         private readonly SimpleHttpLoader loader;
         private readonly Timer timer;
+        private readonly Configurator configReader;
 
-        public SettingsViewModel(SimpleHttpLoader loader)
+        private UpdaterConfig config;
+
+        public SettingsViewModel(SimpleHttpLoader loader, Configurator configReader)
         {
             this.loader = loader;
+            this.configReader = configReader;
 
             SelectDirectoryCommand = new DelegateCommand(SelectDirectory);
 
@@ -73,10 +79,20 @@ namespace Launcher.ViewModels
             set => SetProperty(ref remoteSourceAddress, value);
         }
 
-        private void SelectDirectory()
+        private async void SelectDirectory()
         {
-            RemoteDestinationCheck = Brushes.Green;
-            //await updater.FastLocalClientCheck();
+            VistaFolderBrowserDialog folderdialog = new()
+            {
+                SelectedPath = config.LocalDirectory == null ? "" : Path.GetFullPath(config.LocalDirectory.LocalPath) + "\\",
+                ShowNewFolderButton = true
+            };
+
+            if (folderdialog.ShowDialog() == true)
+            {
+                config.LocalDirectory = new Uri(folderdialog.SelectedPath);
+                LocalGameDirectory = folderdialog.SelectedPath;
+                await configReader.WriteAsync(config);
+            }
         }
 
         private async void PeriodicCheck(object? sender, ElapsedEventArgs e)
@@ -107,9 +123,14 @@ namespace Launcher.ViewModels
             }
         }
 
-        public void OnNavigatedTo(NavigationContext navigationContext)
+        public async void OnNavigatedTo(NavigationContext navigationContext)
         {
             timer.Start();
+
+            config = await configReader.ReadAsync();
+
+            LocalGameDirectory = config.LocalDirectory.LocalPath;
+            RemoteSourceAddress = config.RemoteClientPath.AbsoluteUri;
         }
 
         public bool IsNavigationTarget(NavigationContext navigationContext) => true;

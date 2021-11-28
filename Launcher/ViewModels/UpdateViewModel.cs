@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Prism.Commands;
 using Prism.Mvvm;
+using Prism.Regions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,22 +15,21 @@ using Updater;
 
 namespace Launcher.ViewModels
 {
-    public class UpdateViewModel : BindableBase
+    public class UpdateViewModel : BindableBase, INavigationAware
     {
         private readonly GameUpdater updater;
-        private readonly UpdaterConfig config;
+        private readonly Configurator configReader;
+        private UpdaterConfig? config;
 
-        public UpdateViewModel(GameUpdater updater, LauncherConfig launcherConfig, UpdaterConfig config)
+        public UpdateViewModel(GameUpdater updater, Configurator configReader)
         {
             this.updater = updater;
-            this.config = config;
+            this.configReader = configReader;
 
             UpdateGameButtonText = "Обновить";
 
             PlayGameCommand = new DelegateCommand(PlayGame);
             UpdateGameCommand = new DelegateCommand(UpdateGame);
-
-            PlayEnabled = File.Exists(launcherConfig.ClientExeFile);
         }
 
         private string updateGameButtonText;
@@ -108,12 +108,31 @@ namespace Launcher.ViewModels
             throw new NotImplementedException();
         }
 
-        private void UpdateGame()
+        private async void UpdateGame()
         {
             UpdateEnabled = false;
 
             InfoBlock = "Проверка клиента игры Lineage II";
-            //await updater.FastLocalClientCheck();
+            await updater.FastLocalClientCheck();
+        }
+
+        public async void OnNavigatedTo(NavigationContext navigationContext)
+        {
+            config = await configReader.ReadAsync();
+
+            PlayEnabled = File.Exists(config.ClientExeFile);
+
+            await updater.FastCheckAsync();
+        }
+
+        public bool IsNavigationTarget(NavigationContext navigationContext)
+        {
+            return true;
+        }
+
+        public void OnNavigatedFrom(NavigationContext navigationContext)
+        {
+            
         }
     }
 }

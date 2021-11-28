@@ -16,14 +16,14 @@ namespace Updater
 {
     public class FileChecker
     {
-        private readonly ILogger logger;
+        private readonly ILogger? logger;
 
         public EventHandler<FileCheckerProgressEventArgs> FileCheckerProgress;
         public EventHandler<FileCheckerFinishEventArgs> FileCheckerFinish;
 
         private readonly SHA256 sha256;
 
-        public FileChecker(ILogger<FileChecker> logger)
+        public FileChecker(ILogger<FileChecker>? logger)
         {
             this.logger = logger;
             sha256 = SHA256.Create();
