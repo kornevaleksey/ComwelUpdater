@@ -15,7 +15,7 @@ namespace Updater
         public bool AllowLocalChange { get; set; }
         public bool ImportantFile { get; set; }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj is ClientFileInfo info)
             {

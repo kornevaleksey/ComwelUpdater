@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using Updater;
@@ -18,21 +19,22 @@ namespace Launcher.ViewModels
     public class UpdateViewModel : BindableBase, INavigationAware
     {
         private readonly GameUpdater updater;
-        private readonly Configurator configReader;
         private UpdaterConfig? config;
 
-        public UpdateViewModel(GameUpdater updater, Configurator configReader)
+        public UpdateViewModel(GameUpdater updater)
         {
             this.updater = updater;
-            this.configReader = configReader;
-
-            UpdateGameButtonText = "Обновить";
 
             PlayGameCommand = new DelegateCommand(PlayGame);
             UpdateGameCommand = new DelegateCommand(UpdateGame);
+
+            infoBlock = "";
+            infoBlockAdd = "";
+            infoBlockColor = Brushes.Black;
+
         }
 
-        private string updateGameButtonText;
+        private string updateGameButtonText = "Обновить";
         public string UpdateGameButtonText
         {
             get => updateGameButtonText;
@@ -60,11 +62,11 @@ namespace Launcher.ViewModels
             set => SetProperty(ref infoBlockAdd, value);
         }
 
-        private bool updateEnabled;
-        public bool UpdateEnabled
+        private bool runningGameUpdate;
+        public bool RunningGameUpdate
         {
-            get => updateEnabled;
-            set => SetProperty(ref updateEnabled, value);
+            get => runningGameUpdate;
+            set => SetProperty(ref runningGameUpdate, value);
         }
 
         private bool playEnabled;
@@ -79,9 +81,14 @@ namespace Launcher.ViewModels
 
         private void PlayGame()
         {
+            if (config == null)
+            {
+                return;
+            }
+
             try
             {
-                UpdateEnabled = false;
+                RunningGameUpdate = false;
                 ProcessStartInfo l2info = new();
                 l2info.EnvironmentVariables["__COMPAT_LAYER"] = "RunAsInvoker";
                 l2info.FileName = config.ClientExeFile;
@@ -103,26 +110,28 @@ namespace Launcher.ViewModels
             }
         }
 
-        private void L2RunExited(object sender, EventArgs e)
+        private void L2RunExited(object? sender, EventArgs e)
         {
             throw new NotImplementedException();
         }
 
         private async void UpdateGame()
         {
-            UpdateEnabled = false;
+            RunningGameUpdate = false;
 
             InfoBlock = "Проверка клиента игры Lineage II";
-            await updater.FastLocalClientCheck();
+            //await updater.FastLocalClientCheck();
         }
 
         public async void OnNavigatedTo(NavigationContext navigationContext)
         {
-            config = await configReader.ReadAsync();
-
             PlayEnabled = File.Exists(config.ClientExeFile);
 
-            await updater.FastCheckAsync();
+            CancellationTokenSource cts = new CancellationTokenSource();
+
+            await updater.FastCheckAsync(cts.Token);
+
+            InfoBlock = updater.Difference?.Count > 0 ? "Необходимо обновление" : "Файлы игры проверены";
         }
 
         public bool IsNavigationTarget(NavigationContext navigationContext)

@@ -10,6 +10,8 @@ namespace Config
     {
         private Uri _localDirectory = new Uri(@"c:\Lineage2");
 
+        public string AppDataConfigDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ComwelUpdater");
+
         public Uri LocalDirectory
         {
             get => PlacedInLocalDirectory ? new Uri(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)) : _localDirectory;

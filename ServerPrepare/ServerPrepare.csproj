@@ -22,8 +22,8 @@
 
   <ItemGroup>
     <PackageReference Include="AsyncEnumerator" Version="4.0.2" />
-    <PackageReference Include="Ookii.Dialogs.Wpf.NETCore" Version="2.1.0" />
-    <PackageReference Include="SharpCompress" Version="0.26.0" />
+    <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.0" />
+    <PackageReference Include="SharpCompress" Version="0.30.1" />
   </ItemGroup>
 
   <ItemGroup>

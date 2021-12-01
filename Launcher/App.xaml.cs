@@ -38,7 +38,8 @@ namespace Launcher
             containerRegistry.RegisterSingleton(typeof(ILogger<>), typeof(Logger<>));
 
             string configDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ComwelUpdater");
-            containerRegistry.RegisterSingleton<Configurator>(p => new Configurator(p.Resolve<Microsoft.Extensions.Logging.ILogger<Configurator>>(), configDirectory));
+            containerRegistry.RegisterSingleton<Configurator>(p => new Configurator(p.Resolve<ILogger<Configurator>>(), configDirectory));
+            containerRegistry.RegisterSingleton<UpdaterConfigFactory>();
             containerRegistry.RegisterSingleton<FileChecker>();
             containerRegistry.RegisterSingleton<SimpleHttpLoader>();
             containerRegistry.RegisterSingleton<GameUpdater>();

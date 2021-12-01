@@ -10,12 +10,14 @@ namespace Config
 {
     public class Configurator
     {
+        public event EventHandler<UpdaterConfig>? ConfigurationUpdated;
+
         private readonly JsonSerializerOptions _jsonSerializerOptions;
-        private readonly ILogger _logger;
+        private readonly ILogger? _logger;
 
-        private static UpdaterConfig? updaterConfig;
+        private readonly string configDirectory;
 
-        public Configurator(ILogger logger)
+        public Configurator(ILogger<Configurator>? logger, string configDirectory)
         {
             _logger = logger;
 
@@ -23,47 +25,60 @@ namespace Config
             {
                 WriteIndented = true
             };
+
+            this.configDirectory = configDirectory;
         }
 
         public async Task<UpdaterConfig?> ReadAsync(UpdaterConfig? defaultConfig = null)
         {
-            if (updaterConfig != null)
-            {
-                return updaterConfig;
-            }
-
             UpdaterConfig? _config;
 
-            string fullName = Path.Combine(ConfigDirectory, nameof(UpdaterConfig), ".json");
+            string fullName = Path.Combine(configDirectory, nameof(UpdaterConfig)) + ".json";
 
-            if (!File.Exists(fullName) && defaultConfig != null)
+            if (!File.Exists(fullName))
             {
-                return defaultConfig;
+                _config = defaultConfig;
+                if (_config == null)
+                {
+                    _config = new UpdaterConfig();
+                }
+
+                await WriteAsync(_config);
+                return _config;
             }
 
-            _logger.LogInformation($"Start read updater config from file {fullName}");
+            _logger?.LogInformation($"Start read updater config from file {fullName}");
 
             try
             {
                 _config = await JsonSerializer.DeserializeAsync<UpdaterConfig>(File.Open(fullName, FileMode.Open, FileAccess.Read));
-                _logger.LogInformation($"Config from file {fullName} succefully readed");
+                _logger?.LogInformation($"Config from file {fullName} succefully readed");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error parsing json file!");
+                _logger?.LogError(ex, $"Error parsing json file!");
                 throw;
             }
 
-            updaterConfig = _config;
+            if (_config == null)
+            {
+                _logger?.LogError($"Error parsing json file - config is null!");
+                throw new FileLoadException(fullName);
+            }
 
+            ConfigurationUpdated?.Invoke(this, _config);
             return _config;
         }
 
         public async Task WriteAsync(UpdaterConfig config)
         {
-            string fullName = Path.Combine(_configPath, nameof(UpdaterConfig), ".json");
+            string fullName = Path.Combine(configDirectory, nameof(UpdaterConfig))+".json";
+            _logger?.LogInformation($"Start write updater config to file {fullName}");
+
             string jsonConfig = JsonSerializer.Serialize(config, _jsonSerializerOptions);
             await File.WriteAllTextAsync(fullName, jsonConfig);
+
+            ConfigurationUpdated?.Invoke(this, config);
         }
     }
 }

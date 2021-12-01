@@ -10,27 +10,27 @@ namespace Updater
 {
     public class RemoteSourceDirectory
     {
-        private readonly ILogger _logger;
-        private readonly SimpleHttpLoader _loader;
+        private readonly ILogger? logger;
+        private readonly SimpleHttpLoader loader;
+        private readonly string remoteRelativeAddress;
 
-        private DirectoryModel _model;
-
-        public RemoteSourceDirectory(ILogger logger, SimpleHttpLoader loader)
+        public RemoteSourceDirectory(ILogger<RemoteSourceDirectory>? logger, SimpleHttpLoader loader, string remoteRelativeAddress)
         {
-            _logger = logger;
-            _loader = loader;
+            this.logger = logger;
+            this.loader = loader;
+            this.remoteRelativeAddress = remoteRelativeAddress;
         }
 
-        public DirectoryModel Model => _model;
+        public DirectoryModel? Model { get; private set; }
 
-        public async Task LoadRemoteModel(string remoteModelAddr, CancellationToken token)
+        public async Task LoadRemoteModelAsync(CancellationToken token)
         {
             string temporaryFileName = Path.GetTempFileName();
 
             try
             {
-                await _loader.DownloadFile(remoteModelAddr, temporaryFileName, token);
-                _model = await DirectoryModel.ReadAsync(temporaryFileName);
+                await loader.DownloadFile(remoteRelativeAddress, temporaryFileName, token);
+                Model = await DirectoryModel.ReadAsync(temporaryFileName);
             }
             finally
             {

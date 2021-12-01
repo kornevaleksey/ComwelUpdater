@@ -18,8 +18,8 @@ namespace Updater
     {
         private readonly ILogger? logger;
 
-        public EventHandler<FileCheckerProgressEventArgs> FileCheckerProgress;
-        public EventHandler<FileCheckerFinishEventArgs> FileCheckerFinish;
+        public EventHandler<FileCheckerProgressEventArgs>? FileCheckerProgress;
+        public EventHandler<FileCheckerFinishEventArgs>? FileCheckerFinish;
 
         private readonly SHA256 sha256;
 
@@ -81,33 +81,38 @@ namespace Updater
             return res;
         }
 
-        public static bool FilesCompare(ClientFileInfo localinfo, ClientFileInfo remoteinfo, ClientFileInfo cachedinfo = null)
+        public static bool FilesCompare(ClientFileInfo? localInfo, ClientFileInfo? remoteInfo, ClientFileInfo? cachedInfo = null)
         {
             bool ret = false;
-            if ((localinfo == null) || (remoteinfo == null))
-                return false;
-            if (remoteinfo.AllowLocalChange == true)
-                return true;
 
-            if (remoteinfo.ImportantFile == true)
+            if (localInfo == null || remoteInfo == null)
             {
-                if (remoteinfo.Hash.SequenceEqual(localinfo.Hash))
+                return false;
+            }
+            if (remoteInfo.AllowLocalChange == true)
+            {
+                return true;
+            }
+
+            if (remoteInfo.ImportantFile == true)
+            {
+                if (remoteInfo.Hash.SequenceEqual(localInfo.Hash))
                 {
                     ret = true;
                 }
             }
             else
             {
-                if (cachedinfo == null)
+                if (cachedInfo == null)
                 {
-                    if (localinfo.FileSize == remoteinfo.FileSize)
+                    if (localInfo.FileSize == remoteInfo.FileSize)
                         //if ((localinfo.Changed - remoteinfo.Changed) < new TimeSpan(0, 5, 0))
                         ret = true;
                 }
                 else
                 {
-                    if (cachedinfo.Hash.SequenceEqual(remoteinfo.Hash))
-                        if (remoteinfo.FileSize == localinfo.FileSize)
+                    if (cachedInfo.Hash.SequenceEqual(remoteInfo.Hash))
+                        if (remoteInfo.FileSize == localInfo.FileSize)
                             ret = true;
                 }
             }

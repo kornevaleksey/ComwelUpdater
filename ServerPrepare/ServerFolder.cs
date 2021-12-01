@@ -14,7 +14,7 @@ namespace ServerPrepare.Process
 {
     public class ServerFolder : FolderConfig
     {
-        public ClientModel ClientInfo { get; private set; }
+        public DirectoryModel ClientInfo { get; private set; }
 
         public Action<double, string> CreateInfoProgress;
         public Action FinishInfoProgress;
@@ -32,7 +32,7 @@ namespace ServerPrepare.Process
             List<string> serverfiles = Directory.GetFiles(this.ClientFolder, "*.*", SearchOption.AllDirectories).ToList();
             long compress_size = serverfiles.Select(of => new FileInfo(of).Length).Sum();
 
-            ClientModel ClientInfo = new ClientModel()
+            DirectoryModel ClientInfo = new DirectoryModel()
             {
                 Changed = DateTime.Now,
                 FilesCount = (uint)sourcefiles.Count,
@@ -54,7 +54,7 @@ namespace ServerPrepare.Process
             if (File.Exists(this.InfoFile))
             {
                 string modeltext = await File.ReadAllTextAsync(this.InfoFile);
-                ClientInfo = JsonSerializer.Deserialize<ClientModel>(modeltext);
+                ClientInfo = JsonSerializer.Deserialize<DirectoryModel>(modeltext);
             }
         }
 
