@@ -9,14 +9,16 @@ namespace Launcher.ViewModels
 {
     public class AboutViewModel
     {
-        private string version = Assembly.GetEntryAssembly().GetName().Version.ToString();
-        private string buildDate = Properties.Resources.BuildDate.Trim();
+        private readonly string version;
+        private readonly string buildDate;
 
         public AboutViewModel()
         {
-            VersionInfo = $"Версия {version} от {buildDate} © Korall";
+            var assemblyVersion = Assembly.GetEntryAssembly()?.GetName()?.Version;
+            version = assemblyVersion != null ? assemblyVersion.ToString() : "0.0.0.0";
+            buildDate = Properties.Resources.BuildDate.Trim();
         }
 
-        public string VersionInfo { get; }
+        public string VersionInfo => $"Версия {version} от {buildDate} © Korall";
     }
 }

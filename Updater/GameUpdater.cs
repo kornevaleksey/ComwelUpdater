@@ -23,29 +23,27 @@ namespace Updater
 
         private readonly SimpleHttpLoader loader;
         private readonly FileChecker checker;
-        private readonly UpdaterConfigFactory configFactory;
         private readonly Func<Uri, LocalUpdateDirectory> localDirectoryFactory;
         private readonly Func<string, RemoteSourceDirectory> remoteSourceFactory;
 
-        private UpdaterConfig config;
+        private readonly UpdaterConfig config;
 
         public GameUpdater(
             ILogger<GameUpdater>? logger,
             FileChecker checker,
             SimpleHttpLoader loader,
-            UpdaterConfigFactory configFactory,
+            UpdaterConfig config,
             Func<Uri, LocalUpdateDirectory> localDirectoryFactory,
             Func<string, RemoteSourceDirectory> remoteSourceFactory)
         {
             _logger = logger;
 
             this.loader = loader;
-            this.configFactory = configFactory;
             this.checker = checker;
             this.localDirectoryFactory = localDirectoryFactory;
             this.remoteSourceFactory = remoteSourceFactory;
 
-            config = configFactory.Create();
+            this.config = config;
         }
 
         public bool IsBusy { get; private set; }
@@ -54,8 +52,10 @@ namespace Updater
 
         public List<ClientFileInfo>? Difference { get; private set; }
 
-        public async Task FastCheckAsync(CancellationToken token)
+        public async Task<bool> FastCheckAsync(CancellationToken token)
         {
+            loader.RemoteAddr = config.RemoteClientPath;
+
             IsBusy = true;
 
             _logger?.LogInformation("Start fast local directory check");
@@ -73,7 +73,7 @@ namespace Updater
                 if (remoteClient.Model == null)
                 {
                     ClientCheckProgress?.Invoke(this, new UpdaterProgressEventArgs() { InfoStr = "Не получилось собрать информацию об игре с сервера" });
-                    return;
+                    return false;
                 }
 
                 ClientCheckProgress?.Invoke(this, new UpdaterProgressEventArgs() { InfoStr = "Получена информация об игре с сервера" });
@@ -87,14 +87,16 @@ namespace Updater
                 if (localClient.Model == null)
                 {
                     ClientCheckProgress?.Invoke(this, new UpdaterProgressEventArgs() { InfoStr = "Не получилось проверить файлы игры" });
-                    return;
+                    return false;
                 }
 
                 ClientCheckProgress?.Invoke(this, new UpdaterProgressEventArgs() { InfoStr = "Проверены важные файлы игры" });
 
                 Difference = CompareModels(localClient.Model, remoteClient.Model, localClient.CachedModel);
 
+                _logger?.LogInformation("Succefully finished fast local directory check");
 
+                return Difference.Count > 0;
 
             }
             catch (Exception ex)
@@ -102,8 +104,6 @@ namespace Updater
                 _logger?.LogError(ex, "Fast check error!");
                 throw;
             }
-
-            _logger?.LogInformation("Succefully finished fast local directory check");
         }
 
         private void FullCheckCheckerProgress (object? sender, FileCheckerProgressEventArgs args)
@@ -179,9 +179,20 @@ namespace Updater
 
         }
 
-        public async void UpdateClient(CancellationToken token)
+        public async Task UpdateClient(CancellationToken token)
         {
             _logger?.LogInformation("Start updating client");
+            if (Difference == null)
+            {
+                _logger?.LogInformation("Update don't need");
+                return;
+            }
+
+            if (remoteClient == null || remoteClient.Model == null)
+            {
+                _logger?.LogInformation("The remote model hasn't build");
+                return;
+            }
 
             try
             {
@@ -197,12 +208,18 @@ namespace Updater
             _logger?.LogInformation("Finished updating client");
         }
 
-        public async void RewriteClient(CancellationToken token)
+        public async Task RewriteClient(CancellationToken token)
         {
             _logger?.LogInformation("Start rewriting client");
 
             localClient = localDirectoryFactory(config.LocalDirectory);
             remoteClient = remoteSourceFactory(config.RemoteInfoFile);
+
+            if (remoteClient == null || remoteClient.Model == null)
+            {
+                _logger?.LogInformation("The remote model hasn't build");
+                return;
+            }
 
             try
             {
@@ -245,26 +262,6 @@ namespace Updater
         public long ProgressMax { get; set; } = 0;
         public long ProgressValue { get; set; } = 0;
         public string InfoStr { get; set; } = "";
-    }
-
-    public class ClientCheckErrorEventArgs: EventArgs
-    {
-        public Exception Exeption { get; set; }
-        public string ErrorMessage { get; set; }
-    }
-
-    public class ClientCheckFinishEventArgs : EventArgs
-    {
-        public string FinishMessage { get; set; }
-        public bool UpdateRequired;
-    }
-
-    public class ClientDirectoryException:Exception
-    {
-        public string Directory { get; set; }
-    }
-    public class UpdaterCheckClientException : Exception
-    {
     }
 
 }

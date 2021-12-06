@@ -18,6 +18,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using Updater;
 using System.IO;
+using Launcher.ViewModels;
 
 namespace Launcher
 {
@@ -39,10 +40,12 @@ namespace Launcher
 
             string configDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ComwelUpdater");
             containerRegistry.RegisterSingleton<Configurator>(p => new Configurator(p.Resolve<ILogger<Configurator>>(), configDirectory));
-            containerRegistry.RegisterSingleton<UpdaterConfigFactory>();
+            containerRegistry.RegisterSingleton<UpdaterConfig>(p => p.Resolve<Configurator>().Read());
             containerRegistry.RegisterSingleton<FileChecker>();
             containerRegistry.RegisterSingleton<SimpleHttpLoader>();
             containerRegistry.RegisterSingleton<GameUpdater>();
+
+            containerRegistry.Register<UpdateViewModel>();
 
             //Prism
             containerRegistry.RegisterForNavigation<MainWindowView>();

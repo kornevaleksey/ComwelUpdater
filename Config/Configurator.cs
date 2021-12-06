@@ -29,7 +29,7 @@ namespace Config
             this.configDirectory = configDirectory;
         }
 
-        public async Task<UpdaterConfig?> ReadAsync(UpdaterConfig? defaultConfig = null)
+        public UpdaterConfig? Read(UpdaterConfig? defaultConfig = null)
         {
             UpdaterConfig? _config;
 
@@ -43,7 +43,7 @@ namespace Config
                     _config = new UpdaterConfig();
                 }
 
-                await WriteAsync(_config);
+                Write(_config);
                 return _config;
             }
 
@@ -51,7 +51,8 @@ namespace Config
 
             try
             {
-                _config = await JsonSerializer.DeserializeAsync<UpdaterConfig>(File.Open(fullName, FileMode.Open, FileAccess.Read));
+                string text = File.ReadAllText(fullName);
+                _config = JsonSerializer.Deserialize<UpdaterConfig>(text);
                 _logger?.LogInformation($"Config from file {fullName} succefully readed");
             }
             catch (Exception ex)
@@ -77,6 +78,17 @@ namespace Config
 
             string jsonConfig = JsonSerializer.Serialize(config, _jsonSerializerOptions);
             await File.WriteAllTextAsync(fullName, jsonConfig);
+
+            ConfigurationUpdated?.Invoke(this, config);
+        }
+
+        public void Write(UpdaterConfig config)
+        {
+            string fullName = Path.Combine(configDirectory, nameof(UpdaterConfig)) + ".json";
+            _logger?.LogInformation($"Start write updater config to file {fullName}");
+
+            string jsonConfig = JsonSerializer.Serialize(config, _jsonSerializerOptions);
+            File.WriteAllText(fullName, jsonConfig);
 
             ConfigurationUpdated?.Invoke(this, config);
         }

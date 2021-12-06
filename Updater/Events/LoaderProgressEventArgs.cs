@@ -6,7 +6,7 @@ namespace Updater.Events
 {
     public class LoaderProgressEventArgs : EventArgs
     {
-        public string FileName;
+        public string? FileName;
         public int DownloadTry;
         public double Percentage;
         public double Speed;

@@ -13,17 +13,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using Updater;
+using Updater.Models;
 
 namespace Launcher.ViewModels
 {
     public class UpdateViewModel : BindableBase, INavigationAware
     {
         private readonly GameUpdater updater;
-        private UpdaterConfig? config;
+        private readonly UpdaterConfig config;
 
-        public UpdateViewModel(GameUpdater updater)
+        public UpdateViewModel(GameUpdater updater, UpdaterConfig config)
         {
             this.updater = updater;
+            this.config = config;
 
             PlayGameCommand = new DelegateCommand(PlayGame);
             UpdateGameCommand = new DelegateCommand(UpdateGame);
@@ -32,6 +34,15 @@ namespace Launcher.ViewModels
             infoBlockAdd = "";
             infoBlockColor = Brushes.Black;
 
+            this.updater.ClientCheckProgress += OnLocalCheckProgress;
+        }
+
+        private void OnLocalCheckProgress(object? sender, UpdaterProgressEventArgs e)
+        {
+            InfoBlock = e.InfoStr;
+            MaxProgress = e.ProgressMax;
+            MinProgress = 0;
+            Progress = e.ProgressValue;
         }
 
         private string updateGameButtonText = "Обновить";
@@ -74,6 +85,34 @@ namespace Launcher.ViewModels
         {
             get => playEnabled;
             set => SetProperty(ref playEnabled, value);
+        }
+
+        private bool updateEnabled;
+        public bool UpdateEnabled
+        {
+            get => updateEnabled;
+            set => SetProperty(ref updateEnabled, value);
+        }
+
+        private double progress;
+        public double Progress
+        {
+            get => progress;
+            set => SetProperty(ref progress, value);
+        }
+
+        private double minProgress;
+        public double MinProgress
+        {
+            get => minProgress;
+            set => SetProperty(ref minProgress, value);
+        }
+
+        private double maxProgress;
+        public double MaxProgress
+        {
+            get => maxProgress;
+            set => SetProperty(ref maxProgress, value);
         }
 
         public DelegateCommand PlayGameCommand { get; private set; }
@@ -129,9 +168,22 @@ namespace Launcher.ViewModels
 
             CancellationTokenSource cts = new CancellationTokenSource();
 
-            await updater.FastCheckAsync(cts.Token);
+            bool updateIsNeeded = await updater.FastCheckAsync(cts.Token);
 
-            InfoBlock = updater.Difference?.Count > 0 ? "Необходимо обновление" : "Файлы игры проверены";
+            if (updater.Difference != null && updateIsNeeded)
+            {
+                string updateSize = SizeConverter.Convert(updater.Difference.Sum(f => f.FileSizeCompressed));
+                InfoBlock = "Необходимо обновление";
+                InfoBlockAdd = $"Размер обновления : {updateSize}";
+                InfoBlockColor = Brushes.Black;
+                UpdateEnabled = true;
+            } else
+            {
+                InfoBlock = "Обновление не требуется";
+                InfoBlockAdd = "";
+                InfoBlockColor = Brushes.Green;
+                UpdateEnabled = false;
+            }
         }
 
         public bool IsNavigationTarget(NavigationContext navigationContext)

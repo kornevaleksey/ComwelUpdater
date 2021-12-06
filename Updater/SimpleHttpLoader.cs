@@ -23,49 +23,51 @@ namespace Updater
 {
     public class SimpleHttpLoader
     {
-        public event EventHandler<LoaderProgressEventArgs> LoaderProgress;
-        public event EventHandler<LoaderUnZipProgressEventArgs> UnZipProgress;
-        public event EventHandler<LoaderConnectionCheckEventArgs> ConnectionCheck;
+        public event EventHandler<LoaderProgressEventArgs>? LoaderProgress;
+        public event EventHandler<LoaderUnZipProgressEventArgs>? UnZipProgress;
 
-        private readonly ILogger _logger;
+        private readonly ILogger? logger;
         private readonly FileChecker _fileChecker;
 
-        private string loadFileName;
-        private CancellationToken token;
-        private Stream stream;
+        private static readonly HttpClient httpClient;
 
-        private static HttpClient httpClient;
+        private readonly int downloadTries;
 
-        private readonly int _downloadTries;
-
-        public SimpleHttpLoader(ILogger<SimpleHttpLoader> logger, FileChecker fileChecker, int downloadTries = 5)
+        static SimpleHttpLoader()
         {
-            _logger = logger;
-
             var handler = new HttpClientHandler()
             {
-                SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls | SslProtocols.Ssl3
+                SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls 
             };
             httpClient = new HttpClient(handler);
             httpClient.DefaultRequestHeaders.Accept.Clear();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml"));
+        }
+
+        public SimpleHttpLoader(FileChecker fileChecker, int downloadTries = 5, ILogger<SimpleHttpLoader>? logger = null)
+        {
+            this.logger = logger;
 
             _fileChecker = fileChecker;
 
-            _downloadTries = downloadTries;
+            this.downloadTries = downloadTries;
         }
 
-        public Uri RemoteAddr { get; set; }
-        public Uri RemoteInfoAddr { get; set; }
+        public Uri? RemoteAddr { get; set; }
 
         public async Task<bool> CheckConnectAsync()
         {
+            if (this.RemoteAddr == null)
+            {
+                return false;
+            }
+
             try
             {
                 HttpResponseMessage response = await httpClient.GetAsync(RemoteAddr.ToString());
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
-                _logger.LogInformation($"Success connection to remote storage on {RemoteAddr}");
+                logger?.LogInformation($"Success connection to remote storage on {RemoteAddr}");
                 return true;
             }
             catch (HttpRequestException)
@@ -76,43 +78,48 @@ namespace Updater
 
         public async Task DownloadFile (string remoteRelativePath, string localFileName, CancellationToken token)
         {
+            if (RemoteAddr == null)
+            {
+                return;
+            }
+
             UriBuilder uriBuilder = new UriBuilder(RemoteAddr)
             {
                 Path = remoteRelativePath + ".zip"
             };
-            loadFileName = uriBuilder.Uri.ToString();
+            string loadFileName = uriBuilder.Uri.ToString();
 
-            _logger.LogInformation($"Download file {uriBuilder} into local file {localFileName}");
+            logger?.LogInformation($"Download file {uriBuilder} into local file {localFileName}");
 
             FileInfo fileInfo = new FileInfo(localFileName);
 
             if (!fileInfo.Directory.Exists)
             {
-                _logger.LogInformation($"Creating directory {0}", new FileInfo(localFileName).Directory.FullName);
+                logger?.LogInformation($"Creating directory {0}", new FileInfo(localFileName).Directory.FullName);
                 fileInfo.Directory.Create();
             }
 
             using var streamlocalfile = File.Create(localFileName);
             using var streamresp = httpClient.GetStreamAsync(uriBuilder.Uri);
             using var zipreader = ReaderFactory.Open(await streamresp);
-            stream = streamlocalfile;
-            this.token = token;
 
-            EventHandler<ReaderExtractionEventArgs<IEntry>> eventDelegate = (sender, args) =>
+            //
+            void eventDelegate(object? sender, ReaderExtractionEventArgs<IEntry> args)
             {
                 if (token.IsCancellationRequested)
                 {
-                    stream.Close();
+                    streamlocalfile.Close();
                 }
                 else
                 {
                     UnZipProgress?.Invoke(this, new LoaderUnZipProgressEventArgs()
                     {
-                        Percentage = args.ReaderProgress.PercentageReadExact,
+                        Percentage = args.ReaderProgress != null ? args.ReaderProgress.PercentageReadExact : 0,
                         FileName = loadFileName,
                     });
                 }
-            };
+            }
+            //
 
             zipreader.EntryExtractionProgress += eventDelegate;
 
@@ -121,12 +128,17 @@ namespace Updater
 
             zipreader.EntryExtractionProgress -= eventDelegate;
 
-            _logger.LogInformation($"File {loadFileName} loaded into {localFileName}");
+            logger?.LogInformation($"File {loadFileName} loaded into {localFileName}");
         }
 
         public async Task DownloadClientFiles (string remoteRelativePath, string localPath, IReadOnlyList<ClientFileInfo> filesList, CancellationToken token)
         {
-            _logger.LogInformation($"Start download client {filesList.Count} files");
+            if (RemoteAddr == null)
+            {
+                return;
+            }
+
+            logger?.LogInformation($"Start download client {filesList.Count} files");
 
             List<ClientFileInfo> failed_loads = new List<ClientFileInfo>();
             long filessize = filesList.Sum(ci => ci.FileSize);
@@ -143,7 +155,7 @@ namespace Updater
                 int tries = 0;
                 bool file_ok = false;
                 string local_filename = Path.Combine(localPath, clientFileInfo.FileName);
-                while ((tries<_downloadTries)&&(file_ok==false))
+                while ((tries<downloadTries)&&(file_ok==false))
                 {
                     string remote_uri = remoteRelativePath + clientFileInfo.FileName;
 
@@ -177,7 +189,7 @@ namespace Updater
 
                 if (file_ok==false)
                 {
-                    _logger.LogError($"File {local_filename} download error");
+                    logger?.LogError($"File {local_filename} download error");
                     failed_loads.Add(clientFileInfo);
                 } else
                 {

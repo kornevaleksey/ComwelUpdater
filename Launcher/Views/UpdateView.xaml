@@ -88,12 +88,14 @@
                 Background="White"
                 CornerRadius="5" />
             <ProgressBar
-                x:Name="updatepercentage"
                 Grid.Row="0"
                 Grid.RowSpan="1"
                 Grid.Column="1"
                 Grid.ColumnSpan="2"
-                Margin="0,3,0,10">
+                Margin="0,3,0,10"
+                Maximum="{Binding MaxProgress}"
+                Minimum="{Binding MinProgress}"
+                Value="{Binding Progress}">
                 <ProgressBar.OpacityMask>
                     <VisualBrush Visual="{Binding ElementName=UpdaterProgressMask}" />
                 </ProgressBar.OpacityMask>
@@ -109,10 +111,8 @@
                 <TextBlock
                     Foreground="{Binding InfoBlockColor}"
                     Text="{Binding InfoBlock}"
-                    TextWrapping="Wrap">
-                    InfoText
-                </TextBlock>
-                <TextBlock Text="{Binding InfoBlockAdd}" TextWrapping="Wrap">InfoText Addition</TextBlock>
+                    TextWrapping="Wrap" />
+                <TextBlock Text="{Binding InfoBlockAdd}" TextWrapping="Wrap" />
             </StackPanel>
         </Grid>
         <Button

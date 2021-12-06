@@ -22,7 +22,7 @@ namespace Launcher.ViewModels
         private readonly Timer timer;
         private readonly Configurator configReader;
 
-        private UpdaterConfig config;
+        private UpdaterConfig? config;
 
         public SettingsViewModel(SimpleHttpLoader loader, Configurator configReader)
         {
@@ -58,8 +58,8 @@ namespace Launcher.ViewModels
             set => SetProperty(ref placeInGameDirectory, value);
         }
 
-        private string localGameDirectory;
-        public string LocalGameDirectory
+        private string? localGameDirectory;
+        public string? LocalGameDirectory
         {
             get => localGameDirectory;
             set => SetProperty(ref localGameDirectory, value);
@@ -127,10 +127,16 @@ namespace Launcher.ViewModels
         {
             timer.Start();
 
-            config = await configReader.ReadAsync();
+            config = configReader.Read();
 
-            LocalGameDirectory = config.LocalDirectory.LocalPath;
-            RemoteSourceAddress = config.RemoteClientPath.AbsoluteUri;
+            if (config != null)
+            {
+                LocalGameDirectory = config.LocalDirectory.LocalPath;
+                RemoteSourceAddress = config.RemoteClientPath.AbsoluteUri;
+            } else
+            {
+                config = new UpdaterConfig();
+            }
         }
 
         public bool IsNavigationTarget(NavigationContext navigationContext) => true;

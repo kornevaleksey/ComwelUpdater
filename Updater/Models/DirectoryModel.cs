@@ -27,7 +27,7 @@ namespace Updater
         /// <param name="filename"></param>
         /// <exception cref="FileNotFoundException"/>
         /// <returns></returns>
-        public static async Task<DirectoryModel> ReadAsync(string filename)
+        public static async Task<DirectoryModel?> ReadAsync(string filename)
         {
             string modelStr = await File.ReadAllTextAsync(filename);
             return JsonSerializer.Deserialize<DirectoryModel>(modelStr);
