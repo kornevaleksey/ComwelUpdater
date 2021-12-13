@@ -3,18 +3,21 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:designModels="clr-namespace:Launcher.DesignModels"
     xmlns:local="clr-namespace:Launcher.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:prism="http://prismlibrary.com/"
     xmlns:viewModels="clr-namespace:Launcher.ViewModels"
     Width="368"
     Height="330"
-    d:DataContext="{d:DesignInstance viewModels:UpdateViewModel,
+    d:DataContext="{d:DesignInstance designModels:DesignUpdateViewModel,
                                      IsDesignTimeCreatable=True}"
     d:DesignHeight="330"
     d:DesignWidth="368"
     prism:ViewModelLocator.AutoWireViewModel="True"
     mc:Ignorable="d">
+
+    <UserControl.Resources />
 
     <Grid x:Name="UpdaterGrid" Background="White">
         <Grid.ColumnDefinitions>
@@ -31,7 +34,7 @@
         </Grid.RowDefinitions>
         <Border
             Name="ServerStatusMask"
-            Grid.Row="0"
+            Grid.Row="1"
             Grid.RowSpan="1"
             Grid.Column="1"
             Grid.ColumnSpan="2"
@@ -48,7 +51,6 @@
                 <VisualBrush Visual="{Binding ElementName=ServerStatusMask}" />
             </DockPanel.OpacityMask>
             <Ellipse
-                x:Name="ServerStatusIndicator"
                 Width="30"
                 Height="30"
                 Margin="20,0,0,0"
@@ -75,31 +77,46 @@
                 <ColumnDefinition Width="2.5*" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
+                <RowDefinition Height="3.5*" />
                 <RowDefinition Height="2.5*" />
-                <RowDefinition Height="2.5*" />
-                <RowDefinition Height="5*" />
+                <RowDefinition Height="4*" />
             </Grid.RowDefinitions>
             <Border
                 Name="UpdaterProgressMask"
                 Grid.Row="0"
                 Grid.RowSpan="1"
-                Grid.Column="0"
+                Grid.Column="1"
                 Grid.ColumnSpan="10"
                 Background="White"
                 CornerRadius="5" />
-            <ProgressBar
+            <StackPanel
                 Grid.Row="0"
                 Grid.RowSpan="1"
                 Grid.Column="1"
-                Grid.ColumnSpan="2"
-                Margin="0,3,0,10"
-                Maximum="{Binding MaxProgress}"
-                Minimum="{Binding MinProgress}"
-                Value="{Binding Progress}">
-                <ProgressBar.OpacityMask>
-                    <VisualBrush Visual="{Binding ElementName=UpdaterProgressMask}" />
-                </ProgressBar.OpacityMask>
-            </ProgressBar>
+                Grid.ColumnSpan="2">
+                <ProgressBar
+                    Height="10"
+                    Margin="0,3,0,10"
+                    Maximum="{Binding MaxProgress}"
+                    Minimum="{Binding MinProgress}"
+                    Value="{Binding OverallProgress}">
+                    <ProgressBar.OpacityMask>
+                        <VisualBrush Visual="{Binding ElementName=UpdaterProgressMask}" />
+                    </ProgressBar.OpacityMask>
+                </ProgressBar>
+
+                <ProgressBar
+                    Height="10"
+                    Margin="0,3,0,10"
+                    Maximum="{Binding MaxProgress}"
+                    Minimum="{Binding MinProgress}"
+                    Visibility="{Binding UnzipProgressVisible}"
+                    Value="{Binding FileProgress}">
+                    <ProgressBar.OpacityMask>
+                        <VisualBrush Visual="{Binding ElementName=UpdaterProgressMask}" />
+                    </ProgressBar.OpacityMask>
+                </ProgressBar>
+            </StackPanel>
 
             <StackPanel
                 Grid.Row="1"

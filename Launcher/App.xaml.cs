@@ -19,6 +19,7 @@ using System.Windows;
 using Updater;
 using System.IO;
 using Launcher.ViewModels;
+using Launcher.Models;
 
 namespace Launcher
 {
@@ -44,6 +45,7 @@ namespace Launcher
             containerRegistry.RegisterSingleton<FileChecker>();
             containerRegistry.RegisterSingleton<SimpleHttpLoader>();
             containerRegistry.RegisterSingleton<GameUpdater>();
+            containerRegistry.RegisterSingleton<GameLauncher>();
 
             containerRegistry.Register<UpdateViewModel>();
 

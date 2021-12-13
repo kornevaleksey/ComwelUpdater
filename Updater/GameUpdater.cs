@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using System.Linq;
+using Updater.Events;
 
 namespace Updater
 {
@@ -54,9 +55,9 @@ namespace Updater
 
         public async Task<bool> FastCheckAsync(CancellationToken token)
         {
-            loader.RemoteAddr = config.RemoteClientPath;
-
             IsBusy = true;
+
+            loader.RemoteAddr = config.RemoteDirectoryInfo;
 
             _logger?.LogInformation("Start fast local directory check");
 
@@ -103,16 +104,19 @@ namespace Updater
             {
                 _logger?.LogError(ex, "Fast check error!");
                 throw;
+            } 
+            finally
+            { 
+                IsBusy = false;
             }
         }
 
         private void FullCheckCheckerProgress (object? sender, FileCheckerProgressEventArgs args)
         {
-            ClientCheckProgress?.Invoke(this, new UpdaterProgressEventArgs() 
-            { 
+            ClientCheckProgress?.Invoke(this, new UpdaterProgressEventArgs()
+            {
                 InfoStr = String.Format("Обрабатываю файл {0}", args.FileName),
-                ProgressMax = args.FilesCount,
-                ProgressValue = args.CurrentIndex
+                Progress = args.CurrentIndex * 1.0 / args.FilesCount
             });
         }
 
@@ -121,7 +125,7 @@ namespace Updater
             ClientCheckProgress?.Invoke(this, new UpdaterProgressEventArgs()
             {
                 InfoStr = String.Format("Обработка файлов клиента завершена"),
-                ProgressMax = args.FilesCount,
+                Progress = 100
             });
         }
 
@@ -194,15 +198,48 @@ namespace Updater
                 return;
             }
 
+            IsBusy = true;
+            loader.RemoteAddr = config.RemoteDirectoryFiles;
+
+            void OnLoaderProgress(object? sender, LoaderProgressEventArgs args)
+            {
+                ClientCheckProgress?.Invoke(this, 
+                    new UpdaterProgressEventArgs() 
+                    {
+                        InfoStr = $" Скачиваю файл {args.FileName}", 
+                        Progress = args.Percentage 
+                    });
+            }
+
+            void OnUnzipProgress(object? sender, LoaderUnZipProgressEventArgs args)
+            {
+                ClientCheckProgress?.Invoke(this,
+                    new UpdaterProgressEventArgs()
+                    {
+                        Overall = false,
+                        InfoStr = $"Скачиваю и распаковываю файл {args.FileName}",
+                        Progress = args.Percentage
+                    });
+            }
+
             try
             {
-                await loader.DownloadClientFiles(config.RemoteClientPath.AbsoluteUri, config.LocalDirectory.LocalPath, Difference, token);
+                loader.LoaderProgress += OnLoaderProgress;
+                loader.UnZipProgress += OnUnzipProgress;
+
+                await loader.DownloadClientFiles(config.RemoteDirectoryFiles.AbsoluteUri, config.LocalDirectory.LocalPath, Difference, token);
                 await DirectoryModel.WriteAsync(config.LocalInfoFile, remoteClient.Model);
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Update error!");
                 throw;
+            }
+            finally 
+            {
+                loader.LoaderProgress -= OnLoaderProgress;
+                loader.UnZipProgress -= OnUnzipProgress;
+                IsBusy = false;
             }
 
             _logger?.LogInformation("Finished updating client");
@@ -221,19 +258,27 @@ namespace Updater
                 return;
             }
 
+            IsBusy = true;
+
             try
             {
+                loader.RemoteAddr = config.RemoteDirectoryInfo;
                 ClientCheckProgress?.Invoke(this, new UpdaterProgressEventArgs() { InfoStr = "Загрузка перечня файлов игры" });
                 await remoteClient.LoadRemoteModelAsync(token);
                 ClientCheckProgress?.Invoke(this, new UpdaterProgressEventArgs() { InfoStr = "Получена информация о игре с сервера" });
 
-                await loader.DownloadClientFiles(config.RemoteClientPath.AbsoluteUri, config.LocalDirectory.LocalPath, remoteClient.Model.FilesInfo, token);
+                loader.RemoteAddr = config.RemoteDirectoryFiles;
+                await loader.DownloadClientFiles(config.RemoteDirectoryFiles.AbsoluteUri, config.LocalDirectory.LocalPath, remoteClient.Model.FilesInfo, token);
                 await DirectoryModel.WriteAsync(config.LocalInfoFile, remoteClient.Model);
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Rewrite error!");
                 throw;
+            }
+            finally
+            {
+                IsBusy = false;
             }
 
             _logger?.LogInformation("Finished updating client");
@@ -259,8 +304,8 @@ namespace Updater
 
     public class UpdaterProgressEventArgs : EventArgs
     {
-        public long ProgressMax { get; set; } = 0;
-        public long ProgressValue { get; set; } = 0;
+        public bool Overall { get; set; } = true;
+        public double Progress { get; set; } = 0;
         public string InfoStr { get; set; } = "";
     }
 

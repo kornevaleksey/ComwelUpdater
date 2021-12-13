@@ -1000,21 +1000,6 @@ namespace Launcher.Views
 
         //#endregion
 
-        //#region AboutTab
-
-        //private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
-        //{
-        //    Process runbrowser = new Process();
-        //    runbrowser.StartInfo.UseShellExecute = true;
-        //    runbrowser.StartInfo.FileName = e.Uri.AbsoluteUri;
-
-        //    runbrowser.Start();
-
-        //    e.Handled = true;
-        //}
-
-        //#endregion
-
         //private bool SearchForRunningLineageProcess ()
         //{
         //    /*

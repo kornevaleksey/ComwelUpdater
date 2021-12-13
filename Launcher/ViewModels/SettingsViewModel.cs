@@ -132,7 +132,7 @@ namespace Launcher.ViewModels
             if (config != null)
             {
                 LocalGameDirectory = config.LocalDirectory.LocalPath;
-                RemoteSourceAddress = config.RemoteClientPath.AbsoluteUri;
+                RemoteSourceAddress = config.RemoteStorage.AbsoluteUri;
             } else
             {
                 config = new UpdaterConfig();

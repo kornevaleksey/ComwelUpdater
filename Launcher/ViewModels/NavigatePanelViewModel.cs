@@ -17,10 +17,12 @@ namespace Launcher.ViewModels
         {
             this.regionManager = regionManager;
 
+            AboutCommand = new DelegateCommand(NavigateToAbout);
             UpdaterCommand = new DelegateCommand(NavigateToUpdater);
             SettingsCommand = new DelegateCommand(NavigateToSettings);
         }
 
+        public DelegateCommand AboutCommand { get; private set; }
         public DelegateCommand UpdaterCommand { get; private set; }
         public DelegateCommand SettingsCommand { get; private set; }
 
@@ -32,6 +34,11 @@ namespace Launcher.ViewModels
         public void NavigateToSettings()
         {
             regionManager.RequestNavigate("ContentRegion", "Settings");
+        }
+
+        public void NavigateToAbout()
+        {
+            regionManager.RequestNavigate("ContentRegion", "About");
         }
     }
 }

@@ -104,7 +104,7 @@ namespace Updater
             using var zipreader = ReaderFactory.Open(await streamresp);
 
             //
-            void eventDelegate(object? sender, ReaderExtractionEventArgs<IEntry> args)
+            void OnEntryExtractionProgress(object? sender, ReaderExtractionEventArgs<IEntry> args)
             {
                 if (token.IsCancellationRequested)
                 {
@@ -121,12 +121,12 @@ namespace Updater
             }
             //
 
-            zipreader.EntryExtractionProgress += eventDelegate;
+            zipreader.EntryExtractionProgress += OnEntryExtractionProgress;
 
             zipreader.MoveToNextEntry();
             await Task.Run(() => zipreader.WriteEntryTo(streamlocalfile), token);
 
-            zipreader.EntryExtractionProgress -= eventDelegate;
+            zipreader.EntryExtractionProgress -= OnEntryExtractionProgress;
 
             logger?.LogInformation($"File {loadFileName} loaded into {localFileName}");
         }
@@ -170,7 +170,7 @@ namespace Updater
                     try
                     {
                         DateTime starttime = DateTime.Now;
-                        await DownloadFile(remote_uri, local_filename, token);
+                        await DownloadFile(clientFileInfo.FileName/*remote_uri*/, local_filename, token);
                         TimeSpan timeSpan = DateTime.Now - starttime;
                         FileInfo loaded_info = new FileInfo(local_filename);
                         downloadspeed = loaded_info.Length / timeSpan.TotalSeconds;

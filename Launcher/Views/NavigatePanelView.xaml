@@ -91,7 +91,7 @@
             Command="{Binding AboutCommand}"
             DockPanel.Dock="Bottom"
             Style="{StaticResource ImageButton}"
-            ToolTip="Помощь">
+            ToolTip="Помощь" Cursor="Hand">
             <Button.Resources>
                 <Style TargetType="{x:Type Border}">
                     <Setter Property="CornerRadius" Value="10" />

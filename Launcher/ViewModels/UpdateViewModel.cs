@@ -1,4 +1,5 @@
 ﻿using Config;
+using Launcher.Models;
 using Microsoft.Extensions.Logging;
 using Prism.Commands;
 using Prism.Mvvm;
@@ -11,6 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media;
 using Updater;
 using Updater.Models;
@@ -21,28 +23,56 @@ namespace Launcher.ViewModels
     {
         private readonly GameUpdater updater;
         private readonly UpdaterConfig config;
+        private readonly GameLauncher launcher;
 
-        public UpdateViewModel(GameUpdater updater, UpdaterConfig config)
+        private CancellationTokenSource cts;
+
+        public UpdateViewModel(GameUpdater updater, GameLauncher launcher, UpdaterConfig config)
         {
             this.updater = updater;
             this.config = config;
+            this.launcher = launcher;
 
             PlayGameCommand = new DelegateCommand(PlayGame);
             UpdateGameCommand = new DelegateCommand(UpdateGame);
+
+            cts = new CancellationTokenSource();
 
             infoBlock = "";
             infoBlockAdd = "";
             infoBlockColor = Brushes.Black;
 
+            PlayEnabled = false;
+
             this.updater.ClientCheckProgress += OnLocalCheckProgress;
+        }
+
+        private void OnCanLaunchChanged(object? sender, bool e)
+        {
+            PlayEnabled = e;
         }
 
         private void OnLocalCheckProgress(object? sender, UpdaterProgressEventArgs e)
         {
-            InfoBlock = e.InfoStr;
-            MaxProgress = e.ProgressMax;
-            MinProgress = 0;
-            Progress = e.ProgressValue;
+            if (e.Overall)
+            {
+                InfoBlock = e.InfoStr;
+                OverallProgress = e.Progress;
+                UnzipProgressVisible = Visibility.Hidden;
+            } else
+            {
+                UnzipProgressVisible = Visibility.Visible;
+                InfoBlock = e.InfoStr;
+                InfoBlockAdd = "";
+                FileProgress = e.Progress;
+            }
+        }
+
+        private Visibility visibility;
+        public Visibility UnzipProgressVisible
+        {
+            get => visibility;
+            set => SetProperty(ref visibility, value);
         }
 
         private string updateGameButtonText = "Обновить";
@@ -84,7 +114,12 @@ namespace Launcher.ViewModels
         public bool PlayEnabled
         {
             get => playEnabled;
-            set => SetProperty(ref playEnabled, value);
+            set
+            {
+                bool playGame = !updater.IsBusy && value;
+                SetProperty(ref playEnabled, playGame);
+            }
+
         }
 
         private bool updateEnabled;
@@ -94,21 +129,28 @@ namespace Launcher.ViewModels
             set => SetProperty(ref updateEnabled, value);
         }
 
-        private double progress;
-        public double Progress
+        private double overallProgress;
+        public double OverallProgress
         {
-            get => progress;
-            set => SetProperty(ref progress, value);
+            get => overallProgress;
+            set => SetProperty(ref overallProgress, value);
         }
 
-        private double minProgress;
+        private double fileProgress;
+        public double FileProgress
+        {
+            get => fileProgress;
+            set => SetProperty(ref fileProgress, value);
+        }
+
+        private double minProgress = 0;
         public double MinProgress
         {
             get => minProgress;
             set => SetProperty(ref minProgress, value);
         }
 
-        private double maxProgress;
+        private double maxProgress = 100;
         public double MaxProgress
         {
             get => maxProgress;
@@ -128,18 +170,11 @@ namespace Launcher.ViewModels
             try
             {
                 RunningGameUpdate = false;
-                ProcessStartInfo l2info = new();
-                l2info.EnvironmentVariables["__COMPAT_LAYER"] = "RunAsInvoker";
-                l2info.FileName = config.ClientExeFile;
+                launcher.Launch();
 
-                Process l2Run = new()
-                {
-                    EnableRaisingEvents = true,
-                    StartInfo = l2info
-                };
-                l2Run.Exited += L2RunExited;
-
-                l2Run.Start();
+                InfoBlockColor = Brushes.Black;
+                InfoBlockAdd = String.Empty;
+                InfoBlock = "Игра запущена";
             }
             catch (Exception ex)
             {
@@ -149,30 +184,24 @@ namespace Launcher.ViewModels
             }
         }
 
-        private void L2RunExited(object? sender, EventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
         private async void UpdateGame()
         {
             RunningGameUpdate = false;
 
             InfoBlock = "Проверка клиента игры Lineage II";
-            //await updater.FastLocalClientCheck();
+            await updater.UpdateClient(cts.Token);
         }
 
         public async void OnNavigatedTo(NavigationContext navigationContext)
         {
-            PlayEnabled = File.Exists(config.ClientExeFile);
+            cts = new CancellationTokenSource();
 
-            CancellationTokenSource cts = new CancellationTokenSource();
-
+            UpdateEnabled = false;
             bool updateIsNeeded = await updater.FastCheckAsync(cts.Token);
 
             if (updater.Difference != null && updateIsNeeded)
             {
-                string updateSize = SizeConverter.Convert(updater.Difference.Sum(f => f.FileSizeCompressed));
+                string updateSize = Updater.Models.SizeConverter.Convert(updater.Difference.Sum(f => f.FileSizeCompressed));
                 InfoBlock = "Необходимо обновление";
                 InfoBlockAdd = $"Размер обновления : {updateSize}";
                 InfoBlockColor = Brushes.Black;
@@ -184,6 +213,9 @@ namespace Launcher.ViewModels
                 InfoBlockColor = Brushes.Green;
                 UpdateEnabled = false;
             }
+
+            PlayEnabled = launcher.CanLaunch;
+            launcher.CanLaunchChanged += OnCanLaunchChanged;
         }
 
         public bool IsNavigationTarget(NavigationContext navigationContext)
@@ -195,5 +227,7 @@ namespace Launcher.ViewModels
         {
             
         }
+
+
     }
 }

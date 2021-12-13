@@ -18,7 +18,7 @@ namespace Launcher.Views
     /// <summary>
     /// Логика взаимодействия для AboutView.xaml
     /// </summary>
-    public partial class AboutView : Page
+    public partial class AboutView : UserControl
     {
         public AboutView()
         {

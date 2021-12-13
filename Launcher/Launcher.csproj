@@ -10,14 +10,13 @@
     <ApplicationIcon>Assets\Icons\favicon.ico</ApplicationIcon>
     <Version>0.9.5</Version>
     <Copyright>Korall</Copyright>
-    <PackageLicenseFile></PackageLicenseFile>
+    <PackageLicenseFile>C:\Master\Lineage2\GM\ComwelUpdater\license.txt</PackageLicenseFile>
     <PackageIcon>favicon2.ico</PackageIcon>
     <AssemblyOriginatorKeyFile>korall.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
     <PackageProjectUrl>l2-update.gudilap.ru</PackageProjectUrl>
     <Authors>Korall</Authors>
     <Product>Lineage II Commonwealth Launcher</Product>
-    <PackageLicenseExpression>Copyright © $([System.DateTime]::UtcNow.Year) Korall ($([System.DateTime]::UtcNow.ToString("s")))</PackageLicenseExpression>
     <AssemblyVersion>0.9</AssemblyVersion>
     <FileVersion>0.9</FileVersion>
     <PlatformTarget>x86</PlatformTarget>

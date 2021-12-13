@@ -28,7 +28,9 @@ namespace Config
 
         public bool PlacedInLocalDirectory { get; set; } = false;
 
-        public Uri RemoteClientPath { get; set; } = new Uri($"http://l2-update.gudilap.ru");
+        public Uri RemoteStorage { get; set; } = new Uri($"http://l2-update.gudilap.ru");
+        public Uri RemoteDirectoryInfo => new UriBuilder("https", RemoteStorage.Host, 9001).Uri;
+        public Uri RemoteDirectoryFiles => new UriBuilder("http", RemoteStorage.Host, 9000).Uri;
         public string RemoteInfoFile { get => "clientinfo.inf"; }
         public string LocalInfoFile { get => Path.Combine(ConfigDirectory, "clientinfo.inf"); }
         public string ClientExeFile { get => Path.Combine(LocalDirectory.LocalPath, "system", "l2.exe"); }

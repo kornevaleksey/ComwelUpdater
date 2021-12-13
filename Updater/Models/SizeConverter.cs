@@ -22,7 +22,7 @@ namespace Updater.Models
                 return $"{size / 1024 / 1024 :F2} МиБ";
             } else
             {
-                return $"{size / 1024 / 1024 / 1024: F2} ГиБ";
+                return $"{size / 1024 / 1024 / 1024:F2} ГиБ";
             }
         }
     }
